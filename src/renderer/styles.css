@@ -52,9 +52,6 @@ html, body {
 .grip:active { cursor: grabbing; }
 .grip.dragging { cursor: grabbing; }
 
-.grip-lines { display: flex; flex-direction: column; gap: 2px; opacity: 0.5; pointer-events: none; }
-.grip-lines i { width: 12px; height: 2px; border-radius: 2px; background: currentColor; display: block; }
-
 .title {
   display: inline-block;
   max-width: 55%;
