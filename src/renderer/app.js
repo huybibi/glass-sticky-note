@@ -23,7 +23,6 @@
 
   let note = null;
   let settings = null;
-  let userHeight = 260;   // chiều cao tối thiểu do người dùng kéo
   let saveTimer = null;
 
   const SYSTEM_FONTS = [
@@ -53,9 +52,7 @@
     editor.innerHTML = note.html || '';
     $('#btnPin').classList.toggle('active', !!note.alwaysOnTop);
     footerEl.style.display = settings.showFooter ? '' : 'none';
-    userHeight = note.height || 260;
-    editor.classList.toggle('scrollable', !settings.autoGrow);
-    noteEl.classList.toggle('no-vrz', !settings.autoGrow);
+    editor.classList.add('scrollable');
   }
 
   async function init() {
@@ -70,7 +67,6 @@
     bindEvents();
     syncToolbar();
     scheduleSave();
-    requestAnimationFrame(() => autoGrow(true));
     updateCounters();
   }
 
@@ -201,32 +197,12 @@
     taskCounter.textContent = '';
   }
 
-  /* ========================= auto-grow ========================= */
-
-  function measureNeededHeight() {
-    const grip = 34;
-    const toolbar = $('#toolbar').offsetHeight + 12;
-    const footer = settings.showFooter ? 22 : 2;
-    const editorH = Math.max(60, editor.scrollHeight + 24);
-    return grip + toolbar + editorH + footer;
-  }
-
-  function autoGrow(force) {
-    if (!settings.autoGrow) return;
-    const needed = Math.max(measureNeededHeight(), userHeight);
-    const cur = window.innerHeight;
-    if (force || Math.abs(needed - cur) > 3) {
-      api.resizeWindow(id, window.innerWidth, Math.round(needed));
-    }
-  }
-
   /* ========================= lưu ========================= */
 
   function onChange() {
     updateCounters();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(scheduleSave, 300);
-    if (settings.autoGrow) requestAnimationFrame(() => autoGrow(false));
   }
 
   function scheduleSave() {
@@ -293,7 +269,6 @@
   function bindResize() {
     for (const el of $$('.rz')) {
       const dir = el.dataset.rz;
-      if (dir === 'n' || dir === 's') el.classList.toggle('hidden', settings.autoGrow);
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         el.setPointerCapture(e.pointerId);
@@ -315,8 +290,6 @@
         };
         const onUp = () => {
           el.removeEventListener('pointermove', onMove);
-          userHeight = window.innerHeight;
-          if (settings.autoGrow) requestAnimationFrame(() => autoGrow(false));
         };
         el.addEventListener('pointermove', onMove);
         el.addEventListener('pointerup', onUp, { once: true });
@@ -405,19 +378,10 @@
     tb.addEventListener('mouseleave', () => { toolbarHover = false; syncToolbar(); });
 
     // settings
-    $('#optAutoGrow').addEventListener('change', async (e) => {
-      settings.autoGrow = e.target.checked;
-      await api.setSettings({ autoGrow: settings.autoGrow });
-      editor.classList.toggle('scrollable', !settings.autoGrow);
-      $('.rz-n').classList.toggle('hidden', settings.autoGrow);
-      $('.rz-s').classList.toggle('hidden', settings.autoGrow);
-      if (settings.autoGrow) { userHeight = window.innerHeight; requestAnimationFrame(() => autoGrow(true)); }
-    });
     $('#optFooter').addEventListener('change', async (e) => {
       settings.showFooter = e.target.checked;
       footerEl.style.display = settings.showFooter ? '' : 'none';
       await api.setSettings({ showFooter: settings.showFooter });
-      if (settings.autoGrow) requestAnimationFrame(() => autoGrow(true));
     });
     $('#optLaunch').addEventListener('change', (e) => {
       api.setLaunchAtLogin(e.target.checked);
@@ -464,9 +428,6 @@
       s.removeAllRanges();
       s.addRange(r);
     });
-
-    // auto-grow cũng khi phông chữ thay đổi
-    document.fonts?.addEventListener?.('loadingdone', () => { if (settings.autoGrow) autoGrow(false); });
 
     bindResize();
     bindGripDrag();
@@ -518,7 +479,6 @@
     getSettings: () => settings,
     editor,
     fillNotesList,
-    autoGrow,
   };
 
   /* ========================= chạy ========================= */

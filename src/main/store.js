@@ -13,7 +13,6 @@ let saveTimer = null;
 
 const DEFAULT_SETTINGS = {
   launchAtLogin: false,
-  autoGrow: false,      // mặc định KHÔNG tự phình khi gõ; bật lại trong tùy chọn nếu muốn
   showFooter: true,
   defaultOpacity: 0.55,
   defaultFontFamily: 'Segoe UI',
@@ -87,10 +86,10 @@ function load() {
     state = { settings: { ...DEFAULT_SETTINGS }, notes: [welcomeNote()] };
   }
 
-  // Nâng cấp cài đặt từ phiên bản cũ: v2 tắt auto-grow mặc định
-  if (!state.settings.settingsVersion || state.settings.settingsVersion < 2) {
-    state.settings.autoGrow = false;
-    state.settings.settingsVersion = 2;
+  // Loại bỏ hoàn toàn tính năng tự mở rộng (auto-grow) — không bao giờ để giấy tự phình.
+  if (state.settings.autoGrow || !state.settings.settingsVersion || state.settings.settingsVersion < 3) {
+    delete state.settings.autoGrow;
+    state.settings.settingsVersion = 3;
     persist();
   }
 

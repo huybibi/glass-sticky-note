@@ -37,9 +37,8 @@ const SELF_TEST_SOURCE = `
   // 2. Không còn ô tích cũ trong nội dung tải lên
   ok('không-còn-checkbox-trong-nội-dung', !document.querySelector('.task'));
 
-  // 3. Cài đặt mặc định tắt auto-grow
-  const settings = await window.sticky.getSettings();
-  ok('autoGrow-mặc-định-tắt', settings.autoGrow === false);
+  // 3. Không còn bất kỳ cơ chế tự phình nào (ông tùy chọn + hàm đã bỏ)
+  ok('không-còn-ô-tự-phình', !document.getElementById('optAutoGrow') && typeof window.__ui.autoGrow === 'undefined');
 
   // 4. Nền đen (kênh RGB < 80)
   const noteEl = document.querySelector('.note');
@@ -51,15 +50,18 @@ const SELF_TEST_SOURCE = `
   const bd = getComputedStyle(noteEl).borderTopColor;
   ok('viền-trắng-100%', bd === 'rgb(255, 255, 255)', bd);
 
-  // 6. Gõ chữ không làm khung phình to
+  // 6. Gõ nhiều chữ (dài hơn giấy) không làm khung phình to — cả chiều rộng lẫn chiều cao
   const editor = ui.editor;
-  const h0 = window.innerHeight;
+  const w0 = window.innerWidth, h0 = window.innerHeight;
   editor.innerHTML = '';
   editor.focus();
-  editor.textContent = 'Xin chào, đây là dòng chữ thử nghiệm để kiểm tra không phình khung.';
+  let longText = '';
+  for (let i = 0; i < 60; i++) longText += 'Dòng chữ thử nghiệm thứ ' + i + '. Xin chào Sticky Glass! ';
+  editor.textContent = longText;
   editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-  await sleep(450);
-  ok('gõ-chữ-không-phình-khung', Math.abs(window.innerHeight - h0) <= 2, h0 + ' -> ' + window.innerHeight);
+  await sleep(500);
+  const grew = Math.abs(window.innerWidth - w0) > 2 || Math.abs(window.innerHeight - h0) > 2;
+  ok('gõ-chữ-không-phình-khung', !grew, w0 + 'x' + h0 + ' -> ' + window.innerWidth + 'x' + window.innerHeight);
 
   // 7. Gõ '1. ' không tạo danh sách số; ' ' ' vẫn tạo danh sách chấm
   editor.innerHTML = '';
@@ -217,12 +219,6 @@ function rebuildTrayMenu() {
           type: 'checkbox',
           checked: !!settings.launchAtLogin,
           click: (item) => setLaunchAtLogin(item.checked),
-        },
-        {
-          label: 'Tự mở rộng khi viết kín',
-          type: 'checkbox',
-          checked: !!settings.autoGrow,
-          click: (item) => store.saveSettings({ autoGrow: item.checked }),
         },
       ],
     },
