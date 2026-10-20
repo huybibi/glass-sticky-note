@@ -47,7 +47,9 @@ html, body {
   touch-action: none;
   position: relative;
   z-index: 45; /* nằm trên các tay cầm chỉnh kích thước để kéo thả được dễ dàng */
+  -webkit-app-region: drag; /* kéo di chuyển bằng cơ chế OS — không bao giờ đổi kích thước */
 }
+.grip:active { cursor: grabbing; }
 .grip.dragging { cursor: grabbing; }
 
 .grip-lines { display: flex; flex-direction: column; gap: 2px; opacity: 0.5; pointer-events: none; }
@@ -64,11 +66,11 @@ html, body {
   cursor: text;
   caret-color: currentColor;
   user-select: text; -webkit-user-select: text;
+  -webkit-app-region: no-drag; /* bấm đúng chữ tiêu đề mới sửa được */
 }
 .title:empty::before { content: attr(data-placeholder); opacity: 0.45; }
 
 .ghost {
-  -webkit-app-region: no-drag;
   background: transparent; border: none;
   color: inherit; font-size: 15px;
   width: 28px; height: 26px; border-radius: 8px;

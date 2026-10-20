@@ -88,7 +88,6 @@ const SELF_TEST_SOURCE = `
   // 9. Tiêu đề là div contenteditable (bấm đúng chữ mới sửa), thanh trên kéo được
   const titleEl = document.getElementById('titleInput');
   ok('tiêu-đ-là-contenteditable', titleEl && titleEl.isContentEditable === true);
-  ok('thanh-trên-không-còn-app-region-drag', getComputedStyle(document.getElementById('grip')).webkitAppRegion !== 'drag' && getComputedStyle(document.getElementById('grip')).getPropertyValue('-webkit-app-region') !== 'drag');
 
   // 10. Góc bo 5px + thanh trên nằm trên tay cầm (kéo thả không đụng kích thước)
   const noteStyle = getComputedStyle(document.querySelector('.note'));
@@ -113,6 +112,16 @@ const SELF_TEST_SOURCE = `
   ok('viền-nằm-trong-cửa-sổ',
     r.left >= 0.5 && r.top >= 0.5 && r.bottom <= window.innerHeight - 0.5 && r.right <= window.innerWidth - 0.5,
     r.left + ',' + r.top + ',' + r.bottom + ',' + r.right);
+
+  // 13. Kéo thả dùng cơ chế OS (app-region drag) — không còn tự gọi setPosition thủ công,
+  //     nên không bao giờ đụng đến kích thước.
+  {
+    const gripStyle = getComputedStyle(document.getElementById('grip'));
+    const titleStyle = getComputedStyle(document.getElementById('titleInput'));
+    const nativeDrag = gripStyle.getPropertyValue('-webkit-app-region') === 'drag';
+    const noDragTitle = titleStyle.getPropertyValue('-webkit-app-region') === 'no-drag';
+    ok('kéo-thả-OS-không-đổi-kích-thước', nativeDrag && noDragTitle, nativeDrag + '/' + noDragTitle);
+  }
 
   return out;
 })()
@@ -270,6 +279,8 @@ function createNoteWindow(note) {
     frame: false,
     transparent: true,
     resizable: true,
+    maximizable: false,   // bấm đúp vào thanh kéo không phóng to
+    fullscreenable: false,
     alwaysOnTop: !!note.alwaysOnTop,
     skipTaskbar: true,
     hasShadow: false,

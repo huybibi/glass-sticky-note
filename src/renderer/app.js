@@ -297,36 +297,6 @@
     }
   }
 
-  // Kéo di chuyển toàn bộ giấy nhớ: chỉ bấm vào khoảng trống phía trên.
-  // Bấm đúng vào chữ tiêu đề (hoặc nút) thì vẫn sửa / bấm như bình thường.
-  function bindGripDrag() {
-    const grip = $('#grip');
-    grip.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      if (e.target.closest('.title, button, select, input, label')) return;
-      e.preventDefault();
-      grip.classList.add('dragging');
-      try { grip.setPointerCapture(e.pointerId); } catch { /* noop */ }
-
-      const sx = e.screenX, sy = e.screenY;
-      const x0 = window.screenX, y0 = window.screenY;
-
-      // chỉ di chuyển, tuyệt đối không đụng đến kích thước
-      const move = (ev) => {
-        api.moveWindow(id, x0 + (ev.screenX - sx), y0 + (ev.screenY - sy));
-      };
-      const up = () => {
-        grip.classList.remove('dragging');
-        grip.removeEventListener('pointermove', move);
-        grip.removeEventListener('pointerup', up);
-        grip.removeEventListener('pointercancel', up);
-      };
-      grip.addEventListener('pointermove', move);
-      grip.addEventListener('pointerup', up, { once: true });
-      grip.addEventListener('pointercancel', up, { once: true });
-    });
-  }
-
   /* ========================= sự kiện ========================= */
 
   function bindEvents() {
@@ -430,7 +400,6 @@
     });
 
     bindResize();
-    bindGripDrag();
 
     // chặn menu chuột phải mặc định, thay bằng menu ngữ cảnh tiện ích
     editor.addEventListener('contextmenu', (e) => {
