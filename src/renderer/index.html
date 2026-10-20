@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:;" />
+  <title>Sticky Glass</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="note" id="note">
+
+    <!-- vùng kéo di chuyển + tiêu đề -->
+    <div class="grip" id="grip">
+      <div class="grip-lines"><i></i><i></i><i></i></div>
+      <input class="title" id="titleInput" placeholder="Tiêu đề…" spellcheck="false" />
+      <button class="ghost" id="btnNotes" title="Tất cả giấy nhớ">📄</button>
+      <button class="ghost" id="btnPin" title="Ghim luôn ở trên (Always on top)">📌</button>
+    </div>
+
+    <!-- thanh công cụ -->
+    <div class="toolbar" id="toolbar">
+      <span class="grp">
+        <button data-cmd="task" title="Tạo ô tích (checklist)">☑</button>
+        <button data-cmd="insertUnorderedList" title="Danh sách chấm">•</button>
+        <button data-cmd="insertOrderedList" title="Danh sách đánh số">1.</button>
+      </span>
+      <span class="grp">
+        <button data-cmd="font-size-dec" title="Giảm cỡ chữ">A−</button>
+        <button data-cmd="font-size-inc" title="Tăng cỡ chữ">A+</button>
+        <select id="fontSelect" title="Font chữ"></select>
+        <label class="colorbtn" title="Màu chữ">
+          <span>A</span>
+          <input type="color" id="colorInput" value="#ffffff" />
+        </label>
+      </span>
+      <span class="grp">
+        <button class="pop-toggle" data-pop="opacityPop" id="btnOpacity" title="Độ trong suốt nền">◐</button>
+        <button class="pop-toggle" data-pop="morePop" id="btnMore" title="Xem thêm">⋯</button>
+      </span>
+    </div>
+
+    <!-- popover: độ trong suốt -->
+    <div class="pop" id="opacityPop">
+      <div class="pop-title">Nền giấy</div>
+      <div class="opacity-chips">
+        <button data-op="0.12" title="Trong suốt">Trong suốt</button>
+        <button data-op="0.45" title="Mờ">Mờ</button>
+        <button data-op="0.85" title="Đậm">Đậm</button>
+      </div>
+      <input type="range" id="opacityRange" min="5" max="100" value="55" />
+      <div class="pop-hint">Kéo để tùy chỉnh — chữ luôn 100% rõ</div>
+    </div>
+
+    <!-- popover: xem thêm -->
+    <div class="pop" id="morePop">
+      <div class="pop-title">Tùy chọn</div>
+      <label class="row"><input type="checkbox" id="optAutoGrow" /> Tự mở rộng khi viết kín</label>
+      <label class="row"><input type="checkbox" id="optFooter" /> Hiện đếm từ / việc</label>
+      <label class="row"><input type="checkbox" id="optLaunch" /> Tự khởi động cùng máy</label>
+      <hr />
+      <button class="row-btn" id="btnAddFont">＋ Cài font chữ (ttf/otf…)</button>
+      <button class="row-btn" id="btnExport">⬇ Xuất ra file .txt</button>
+      <button class="row-btn danger" id="btnDelete">🗑 Xóa giấy nhớ này</button>
+      <hr />
+      <button class="row-btn" id="btnQuit">⏻ Thoát Sticky Glass</button>
+    </div>
+
+    <!-- danh sách giấy nhớ -->
+    <div class="pop" id="notesPop">
+      <div class="pop-title">Giấy nhớ</div>
+      <div id="notesList"></div>
+      <button class="row-btn" id="btnNewNote">＋ Tạo giấy nhớ mới</button>
+    </div>
+
+    <!-- vùng soạn thảo -->
+    <div class="editor" id="editor" contenteditable="true" spellcheck="false" data-placeholder="Viết gì đó nhớ…"></div>
+
+    <!-- footer -->
+    <div class="footer" id="footer">
+      <span id="taskCounter"></span>
+      <span class="spacer"></span>
+      <span id="wordCounter"></span>
+    </div>
+
+    <!-- tay cầm chỉnh kích thước -->
+    <div class="rz rz-n" data-rz="n"></div>
+    <div class="rz rz-s" data-rz="s"></div>
+    <div class="rz rz-e" data-rz="e"></div>
+    <div class="rz rz-w" data-rz="w"></div>
+    <div class="rz rz-ne" data-rz="ne"></div>
+    <div class="rz rz-nw" data-rz="nw"></div>
+    <div class="rz rz-se" data-rz="se"></div>
+    <div class="rz rz-sw" data-rz="sw"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
