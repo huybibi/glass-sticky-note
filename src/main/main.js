@@ -28,25 +28,28 @@ const SELF_TEST_SOURCE = `
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const ui = window.__ui;
 
-  // 1. Thanh công cụ đã bỏ H1/H2/H3/đậm/nghiêng/gạch chân + checkbox
-  const banned = ['h1', 'h2', 'h3', 'bold', 'italic', 'underline', 'task'];
+  // 1. Thanh công cụ chỉ còn: chấm đầu dòng, A±, màu, ◐, ⋯
+  const banned = ['h1', 'h2', 'h3', 'bold', 'italic', 'underline', 'task', 'strikeThrough', 'insertOrderedList'];
   const missing = banned.every((c) => !document.querySelector('[data-cmd="' + c + '"]'));
-  ok('toolbar-đã-bỏ-định-dạng-và-checkbox', missing, banned.join(','));
+  ok('toolbar-gọn-đúng-yêu-cầu', missing, banned.join(','));
+  ok('còn-nút-danh-sách-chấm', !!document.querySelector('[data-cmd="insertUnorderedList"]'));
 
-  // 2. Có nút gạch ngang
-  ok('có-nút-gạch-ngang', !!document.querySelector('[data-cmd="strikeThrough"]'));
-
-  // 3. Không còn ô tích cũ trong nội dung tải lên
+  // 2. Không còn ô tích cũ trong nội dung tải lên
   ok('không-còn-checkbox-trong-nội-dung', !document.querySelector('.task'));
 
-  // 4. Cài đặt mặc định tắt auto-grow
+  // 3. Cài đặt mặc định tắt auto-grow
   const settings = await window.sticky.getSettings();
   ok('autoGrow-mặc-định-tắt', settings.autoGrow === false);
 
-  // 5. Nền đen (kênh RGB < 80)
-  const bg = getComputedStyle(document.querySelector('.note')).backgroundColor;
+  // 4. Nền đen (kênh RGB < 80)
+  const noteEl = document.querySelector('.note');
+  const bg = getComputedStyle(noteEl).backgroundColor;
   const m = bg.match(/\\d+/g);
   ok('nền-đen', m && m.slice(0, 3).every((v) => +v < 80), bg);
+
+  // 5. Viền trắng đậm 100%
+  const bd = getComputedStyle(noteEl).borderTopColor;
+  ok('viền-trắng-100%', bd === 'rgb(255, 255, 255)', bd);
 
   // 6. Gõ chữ không làm khung phình to
   const editor = ui.editor;
@@ -58,20 +61,19 @@ const SELF_TEST_SOURCE = `
   await sleep(450);
   ok('gõ-chữ-không-phình-khung', Math.abs(window.innerHeight - h0) <= 2, h0 + ' -> ' + window.innerHeight);
 
-  // 7. Gạch ngang bật/tắt trên vùng chọn
-  editor.innerHTML = '<div>hello world</div>';
-  const tnode = editor.querySelector('div').firstChild;
-  const r = document.createRange();
-  r.setStart(tnode, 0); r.setEnd(tnode, 5);
-  const s = window.getSelection();
-  s.removeAllRanges(); s.addRange(r);
-  ui.runCommand('strikeThrough');
-  await sleep(60);
-  const struck = editor.innerHTML.toLowerCase().includes('strike');
-  ui.runCommand('strikeThrough');
-  await sleep(60);
-  const unstruck = !editor.innerHTML.toLowerCase().includes('strike') || editor.querySelectorAll('strike').length === 0;
-  ok('gạch-ngang-bật/tắt', struck && unstruck, editor.innerHTML.slice(0, 60));
+  // 7. Gõ '1. ' không tạo danh sách số; ' ' ' vẫn tạo danh sách chấm
+  editor.innerHTML = '';
+  editor.focus();
+  editor.textContent = '1.';
+  editor.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: ' ', inputType: 'insertText' }));
+  await sleep(80);
+  ok('không-còn-danh-sách-số', !editor.querySelector('ol') && !editor.querySelector('li'));
+  editor.innerHTML = '';
+  editor.focus();
+  editor.textContent = '*';
+  editor.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: ' ', inputType: 'insertText' }));
+  await sleep(80);
+  ok('danh-sách-chấm-còn-hoạt-động', !!editor.querySelector('ul'));
 
   // 8. Enter không bị chặn (không có handler nào preventDefault)
   editor.innerHTML = '';
@@ -80,6 +82,11 @@ const SELF_TEST_SOURCE = `
   editor.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.defaultPrevented) blocked = true; }, { once: true });
   editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
   ok('enter-không-bị-chặn', !blocked);
+
+  // 9. Tiêu đề là div contenteditable (bấm đúng chữ mới sửa), thanh trên kéo được
+  const titleEl = document.getElementById('titleInput');
+  ok('tiêu-đ-là-contenteditable', titleEl && titleEl.isContentEditable === true);
+  ok('thanh-trên-không-còn-app-region-drag', getComputedStyle(document.getElementById('grip')).webkitAppRegion !== 'drag' && getComputedStyle(document.getElementById('grip')).getPropertyValue('-webkit-app-region') !== 'drag');
 
   return out;
 })()

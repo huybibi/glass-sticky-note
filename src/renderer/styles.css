@@ -27,7 +27,7 @@ html, body {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1.5px solid #ffffff;
   background: rgba(12, 14, 20, var(--alpha));
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   backdrop-filter: blur(16px) saturate(150%);
@@ -40,25 +40,30 @@ html, body {
 .grip {
   display: flex; align-items: center; gap: 8px;
   height: 34px; padding: 0 10px;
-  -webkit-app-region: drag;
   flex: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px 16px 0 0;
+  cursor: grab;
+  touch-action: none;
 }
-.grip:active { background: rgba(255, 255, 255, 0.08); }
+.grip.dragging { cursor: grabbing; }
 
-.grip-lines { display: flex; flex-direction: column; gap: 2px; opacity: 0.5; }
+.grip-lines { display: flex; flex-direction: column; gap: 2px; opacity: 0.5; pointer-events: none; }
 .grip-lines i { width: 12px; height: 2px; border-radius: 2px; background: currentColor; display: block; }
 
 .title {
-  flex: 1; min-width: 0;
+  display: inline-block;
+  max-width: 55%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   background: transparent; border: none; outline: none;
   color: inherit; font-size: 13px; font-weight: 600;
   letter-spacing: 0.02em;
   font-family: inherit;
-  -webkit-app-region: no-drag;
+  cursor: text;
+  caret-color: currentColor;
+  user-select: text; -webkit-user-select: text;
 }
-.title::placeholder { color: currentColor; opacity: 0.45; }
+.title:empty::before { content: attr(data-placeholder); opacity: 0.45; }
 
 .ghost {
   -webkit-app-region: no-drag;

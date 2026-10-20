@@ -49,7 +49,7 @@
     r.setProperty('--tc', note.textColor || '#ffffff');
     opacityRange.value = Math.round((note.opacity ?? 0.55) * 100);
     colorInput.value = note.textColor || '#ffffff';
-    titleInput.value = note.title || '';
+    titleInput.textContent = note.title || '';
     editor.innerHTML = note.html || '';
     $('#btnPin').classList.toggle('active', !!note.alwaysOnTop);
     footerEl.style.display = settings.showFooter ? '' : 'none';
@@ -126,8 +126,6 @@
   function runCommand(cmd) {
     switch (cmd) {
       case 'insertUnorderedList': exec('insertUnorderedList'); break;
-      case 'insertOrderedList': exec('insertOrderedList'); break;
-      case 'strikeThrough': exec('strikeThrough'); break;
       case 'font-size-inc': changeFontSize(+1); break;
       case 'font-size-dec': changeFontSize(-1); break;
     }
@@ -181,10 +179,6 @@
       e.preventDefault();
       block.innerHTML = '';
       exec('insertUnorderedList');
-    } else if (text === '1.') {
-      e.preventDefault();
-      block.innerHTML = '';
-      exec('insertOrderedList');
     }
   }
 
@@ -238,7 +232,7 @@
   function scheduleSave() {
     api.updateNote(id, {
       html: editor.innerHTML,
-      title: titleInput.value.trim() || 'Giấy nhớ',
+      title: titleInput.textContent.trim() || 'Giấy nhớ',
       opacity: note.opacity,
       fontFamily: note.fontFamily,
       fontSize: note.fontSize,
@@ -310,6 +304,31 @@
         el.addEventListener('pointerup', onUp, { once: true });
       });
     }
+  }
+
+  // Kéo di chuyển toàn bộ giấy nhớ: chỉ bấm vào khoảng trống phía trên.
+  // Bấm đúng vào chữ tiêu đề (hoặc nút) thì vẫn sửa / bấm như bình thường.
+  function bindGripDrag() {
+    const grip = $('#grip');
+    grip.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('.title, button, select, input, label')) return;
+      e.preventDefault();
+      grip.classList.add('dragging');
+      const sx = e.screenX, sy = e.screenY;
+      const x0 = window.screenX, y0 = window.screenY;
+
+      const move = (ev) => {
+        api.moveWindow(id, x0 + (ev.screenX - sx), y0 + (ev.screenY - sy));
+      };
+      const up = () => {
+        grip.classList.remove('dragging');
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up, { once: true });
+    });
   }
 
   /* ========================= sự kiện ========================= */
@@ -404,12 +423,19 @@
     editor.addEventListener('blur', scheduleSave);
 
     titleInput.addEventListener('input', onChange);
-    titleInput.addEventListener('focus', () => titleInput.select());
+    titleInput.addEventListener('focus', () => {
+      const r = document.createRange();
+      r.selectNodeContents(titleInput);
+      const s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    });
 
     // auto-grow cũng khi phông chữ thay đổi
     document.fonts?.addEventListener?.('loadingdone', () => { if (settings.autoGrow) autoGrow(false); });
 
     bindResize();
+    bindGripDrag();
 
     // chặn menu chuột phải mặc định, thay bằng menu ngữ cảnh tiện ích
     editor.addEventListener('contextmenu', (e) => {
@@ -424,7 +450,6 @@
     const items = [
       ['Tăng cỡ chữ', () => changeFontSize(+1)],
       ['Giảm cỡ chữ', () => changeFontSize(-1)],
-      ['Gạch ngang', () => exec('strikeThrough')],
       ['Danh sách chấm', () => exec('insertUnorderedList')],
       ['---'],
       ['Sao chép', () => exec('copy')],
