@@ -104,6 +104,12 @@ const SELF_TEST_SOURCE = `
   const vis = !tb.classList.contains('collapsed');
   ok('toolbar-tự-ẩn/hiện', hid && vis, hid + '/' + vis);
 
+  // 12. Tờ giấy nằm lùi vào trong cửa sổ (viền không bị mép cắt)
+  const r = document.querySelector('.note').getBoundingClientRect();
+  ok('viền-nằm-trong-cửa-sổ',
+    r.left >= 0.5 && r.top >= 0.5 && r.bottom <= window.innerHeight - 0.5 && r.right <= window.innerWidth - 0.5,
+    r.left + ',' + r.top + ',' + r.bottom + ',' + r.right);
+
   return out;
 })()
 `;
@@ -114,6 +120,27 @@ async function runSelfTest() {
   try {
     await new Promise((r) => setTimeout(r, 1300));
     const results = await win.webContents.executeJavaScript(SELF_TEST_SOURCE);
+
+    // kiểm tra bằng pixel: viền trắng phải hiển thị ở cả mép trên và dưới
+    try {
+      const img = await win.webContents.capturePage();
+      const bmp = img.toBitmap();
+      const { width: W, height: H } = img.getSize();
+      const physW = Math.round(Math.sqrt((bmp.length / 4) * (W / H)));
+      const physH = Math.round(bmp.length / 4 / physW);
+      const midX = Math.floor(physW / 2);
+      const isWhite = (x, y) => {
+        const i = (y * physW + x) * 4;
+        return bmp[i] >= 245 && bmp[i + 1] >= 245 && bmp[i + 2] >= 245;
+      };
+      let topHas = false, bottomHas = false;
+      for (let y = 0; y < Math.min(14, physH); y++) if (isWhite(midX, y)) topHas = true;
+      for (let y = Math.max(0, physH - 14); y < physH; y++) if (isWhite(midX, y)) bottomHas = true;
+      results.push({ name: 'viền-trắng-hiển-thị-cả-trên-dưới', ok: topHas && bottomHas, info: `top=${topHas} bottom=${bottomHas} phys=${physW}x${physH}` });
+    } catch (e) {
+      results.push({ name: 'viền-trắng-pixel', ok: false, info: String(e) });
+    }
+
     const failed = results.filter((r) => !r.ok);
     console.log('SELFTEST RESULT:');
     for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.info ? '  (' + r.info + ')' : ''}`);

@@ -24,7 +24,7 @@ html, body {
 
 /* ---------- bề mặt giấy ---------- */
 .note {
-  position: absolute; inset: 0;
+  position: absolute; inset: 1px; /* lùi vào 1px để viền không bị mép cửa sổ cắt mất */
   display: flex; flex-direction: column;
   border-radius: 5px;
   border: 1px solid #ffffff;

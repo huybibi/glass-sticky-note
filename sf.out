@@ -1,0 +1,20 @@
+
+SELFTEST RESULT:
+  PASS  toolbar-gọn-đúng-yêu-cầu  (h1,h2,h3,bold,italic,underline,task,strikeThrough,insertOrderedList)
+  PASS  còn-nút-danh-sách-chấm
+  PASS  không-còn-checkbox-trong-nội-dung
+  PASS  autoGrow-mặc-định-tắt
+  PASS  nền-đen  (rgba(12, 14, 20, 0.18))
+  PASS  viền-trắng-100%  (rgb(255, 255, 255))
+  PASS  gõ-chữ-không-phình-khung  (226 -> 226)
+  PASS  không-còn-danh-sách-số
+  PASS  danh-sách-chấm-còn-hoạt-động
+  PASS  enter-không-bị-chặn
+  PASS  tiêu-đ-là-contenteditable
+  PASS  thanh-trên-không-còn-app-region-drag
+  PASS  góc-bo-5px  (5px)
+  PASS  thanh-kéo-trên-tay-cầm
+  PASS  toolbar-tự-ẩn/hiện  (true/true)
+  PASS  viền-nằm-trong-cửa-sổ  (1,1,225,279)
+  PASS  viền-trắng-hiển-thị-cả-trên-dưới  (top=true bottom=true phys=420x339)
+SELFTEST: TẤT CẢ PASS
