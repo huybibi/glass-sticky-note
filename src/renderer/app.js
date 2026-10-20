@@ -243,32 +243,63 @@
     return document.querySelector('.pop-toggle[data-pop="' + name + '"]');
   }
 
-  // Đặt menu dropdown tại vị trí vừa khít cửa sổ: mở xuống dưới nút;
-  // nếu không đủ chỗ thì tự lật mở lên trên. Luôn hiển thị trọn vẹn, không bị cắt.
-  function positionPop(pop, name) {
-    const btn = anchorForPop(name);
-    if (!btn) return;
-    const r = btn.getBoundingClientRect();
-    const pw = Math.min(pop.offsetWidth || 240, window.innerWidth - 12);
-    const ph = pop.offsetHeight || 260;
-    const gap = 6;
-    const left = Math.min(Math.max(gap, r.right - pw), window.innerWidth - pw - gap);
-    let top = r.bottom + gap;
-    if (top + ph > window.innerHeight - gap && r.top - gap - ph > gap) {
-      top = r.top - ph - gap; // mở lên trên
-    } else {
-      top = Math.max(gap, Math.min(top, window.innerHeight - gap - ph));
+  let popExpanded = false; // cửa sổ đang được mở rộng tạm thời cho dropdown
+
+  // Khi đóng hết menu: khôi phục kích thước giấy ban đầu.
+  function restoreAfterPop(force) {
+    if (popExpanded || force) {
+      popExpanded = false;
+      api.restoreNoteBounds(id);
     }
-    pop.style.left = Math.max(gap, left) + 'px';
-    pop.style.top = top + 'px';
   }
 
-  function togglePop(name) {
+  // Đặt menu tại vị trí tự nhiên (mở xuống). Nếu thiếu chỗ trong cửa sổ,
+  // mở rộng tạm thời cửa sổ xuống dưới để menu tràn ra ngoài giấy — không dùng thanh cuộn.
+  async function positionPop(pop, name) {
+    const btn = anchorForPop(name);
+    if (!btn) return;
+    const gap = 6;
+    pop.style.maxHeight = 'none';
+    pop.style.overflowY = 'visible';
+    pop.style.left = '10px';
+    pop.style.top = '10px';
+
+    const pw = Math.min(pop.offsetWidth || 240, window.innerWidth - 12);
+    const ph = pop.offsetHeight || 300;
+    const r = btn.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - (r.bottom + gap);
+    const spaceAbove = r.top - gap;
+    const left = Math.min(Math.max(gap, r.right - pw), window.innerWidth - pw - gap);
+
+    if (spaceBelow >= ph) {
+      pop.style.left = left + 'px';
+      pop.style.top = (r.bottom + gap) + 'px';
+    } else if (spaceAbove >= ph) {
+      pop.style.left = left + 'px';
+      pop.style.top = (r.top - ph - gap) + 'px'; // lật lên trên
+    } else {
+      // mở rộng cửa sổ xuống dưới để menu tràn ra ngoài giấy
+      const need = Math.ceil(ph - spaceBelow) + 12; // +12px đệm an toàn, không chạm mép
+      await api.expandForPop(id, { bottom: need });
+      await new Promise((res) => setTimeout(res, 90));
+      const r2 = btn.getBoundingClientRect();
+      pop.style.left = Math.min(Math.max(gap, r2.right - pw), window.innerWidth - pw - gap) + 'px';
+      pop.style.top = (r2.bottom + gap) + 'px';
+      popExpanded = true;
+    }
+  }
+
+  async function togglePop(name) {
     const pop = $('#' + name);
     const open = pop.classList.toggle('open');
+    const wasOpen = !open && document.querySelector('.pop.open') === null;
     $$('.pop').forEach((p) => { if (p !== pop) p.classList.remove('open'); });
     $$('.pop-toggle').forEach((b) => b.classList.toggle('active', b.dataset.pop === name && open));
-    if (open) positionPop(pop, name);
+    if (open) {
+      await positionPop(pop, name);
+    } else {
+      restoreAfterPop(false);
+    }
     syncToolbar();
     return open;
   }
@@ -359,6 +390,7 @@
       if (!e.target.closest('.pop') && !e.target.closest('.pop-toggle')) {
         $$('.pop').forEach((p) => p.classList.remove('open'));
         $$('.pop-toggle').forEach((b) => b.classList.remove('active'));
+        restoreAfterPop(false);
         syncToolbar();
       }
     });

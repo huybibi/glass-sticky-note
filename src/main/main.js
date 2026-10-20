@@ -17,6 +17,7 @@ let tray = null;
 let quitting = false;
 let capturing = process.argv.includes('--capture');
 let selftest = process.argv.includes('--selftest');
+let suppressGeoSave = false; // tạm lờ lưu kích thước khi mở rộng cho dropdown
 
 /* ------------------------------- selftest ------------------------------- */
 
@@ -136,26 +137,31 @@ const SELF_TEST_SOURCE = `
     await sleep(120);
   }
 
-  // 15. Menu 3 chấm luôn hiển thị trọn vẹn ngay cả khi giấy ngắn hơn menu
+  // 15. Menu 3 chấm tràn ra ngoài giấy khi giấy ngắn — không dùng thanh cuộn
   {
     const noteId = new URLSearchParams(location.search).get('id');
+    const origW = window.innerWidth, origH = window.innerHeight;
     // thu nhỏ cửa sổ để giấy ngắn hơn menu
     await window.sticky.resizeWindow(noteId, 220, 170);
     await sleep(300);
+    const noteBottom = document.querySelector('.note').getBoundingClientRect().bottom;
     const moreBtn = document.querySelector('.pop-toggle[data-pop="morePop"]');
     moreBtn.click();
-    await sleep(200);
+    await sleep(350);
     const mp = document.getElementById('morePop');
     const mr = mp.getBoundingClientRect();
-    const fits = mp.classList.contains('open') &&
-      mr.top >= 2 && mr.bottom <= window.innerHeight - 2 &&
-      mr.left >= 2 && mr.right <= window.innerWidth - 2;
-    ok('menu-3-chấm-không-bị-cắt-khi-giấy-ngắn', fits, mr.top + ',' + mr.bottom + ',' + mr.left + ',' + mr.right + ' h=' + window.innerHeight);
-    // đóng menu rồi trả về kích thước bình thường
+    const noScroll = mp.scrollHeight <= mp.clientHeight + 1;
+    const visible = mr.top >= 2 && mr.bottom <= window.innerHeight - 2;
+    const spills = mr.bottom > noteBottom - 1;
+    ok('menu-tràn-ra-ngoài-giấy-không-cuộn', mp.classList.contains('open') && visible && spills && noScroll,
+      'bottom=' + mr.bottom + ' noteBottom=' + noteBottom + ' h=' + window.innerHeight + ' scroll=' + mp.scrollHeight + '/' + mp.clientHeight);
+    // đóng menu rồi trả về kích thước ban đầu
     document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await sleep(250);
+    await window.sticky.resizeWindow(noteId, origW, origH);
+    await sleep(250);
+    await window.sticky.updateNote(noteId, { width: origW, height: origH });
     await sleep(150);
-    await window.sticky.resizeWindow(noteId, 280, 265);
-    await sleep(300);
   }
 
   return out;
@@ -357,6 +363,7 @@ function createNoteWindow(note) {
 
 function saveGeometry(win) {
   if (!win || win.isDestroyed()) return;
+  if (suppressGeoSave) return; // bỏ qua khi tạm mở rộng/khôi phục cho dropdown
   const id = win.webContents.getURL().match(/[?&]id=([^&]+)/)?.[1];
   if (!id) return;
   const [x, y] = win.getPosition();
@@ -454,6 +461,39 @@ function registerIpc() {
   ipcMain.on('win:setAlwaysOnTop', (e, id, flag) => {
     const win = mainWindows.get(id);
     if (win && !win.isDestroyed()) win.setAlwaysOnTop(!!flag);
+  });
+
+  // Tạm thời mở rộng cửa sổ để menu dropdown tràn ra ngoài giấy
+  ipcMain.handle('win:expandForPop', (e, id, d) => {
+    const win = mainWindows.get(id);
+    if (!win || win.isDestroyed()) return { ok: false };
+    const [x, y] = win.getPosition();
+    const [w, h] = win.getSize();
+    const left = d.left || 0, right = d.right || 0, top = d.top || 0, bottom = d.bottom || 0;
+    suppressGeoSave = true;
+    win.setBounds({
+      x: Math.round(x - left),
+      y: Math.round(y - top),
+      width: Math.max(180, Math.round(w + left + right)),
+      height: Math.max(120, Math.round(h + top + bottom)),
+    });
+    setTimeout(() => { suppressGeoSave = false; }, 600);
+    return { ok: true };
+  });
+
+  ipcMain.handle('win:restoreNoteBounds', (e, id) => {
+    const note = store.getNote(id);
+    const win = mainWindows.get(id);
+    if (!note || !win || win.isDestroyed()) return { ok: false };
+    suppressGeoSave = true;
+    win.setBounds({
+      x: Math.round(note.x ?? win.getPosition()[0]),
+      y: Math.round(note.y ?? win.getPosition()[1]),
+      width: Math.max(180, Math.round(note.width ?? 280)),
+      height: Math.max(120, Math.round(note.height ?? 260)),
+    });
+    setTimeout(() => { suppressGeoSave = false; }, 600);
+    return { ok: true };
   });
 
   ipcMain.handle('settings:get', () => store.getSettings());

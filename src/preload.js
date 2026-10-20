@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('sticky', {
   moveWindow: (id, x, y) => ipcRenderer.send('win:move', id, x, y),
   resizeWindow: (id, w, h) => ipcRenderer.send('win:resize', id, w, h),
   setAlwaysOnTop: (id, flag) => ipcRenderer.send('win:setAlwaysOnTop', id, flag),
+  expandForPop: (id, d) => ipcRenderer.invoke('win:expandForPop', id, d),
+  restoreNoteBounds: (id) => ipcRenderer.invoke('win:restoreNoteBounds', id),
 
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
