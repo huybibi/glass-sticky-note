@@ -123,6 +123,17 @@ const SELF_TEST_SOURCE = `
     ok('kéo-thả-OS-không-đổi-kích-thước', nativeDrag && noDragTitle, nativeDrag + '/' + noDragTitle);
   }
 
+  // 14. Nút 📄 📌 nằm ngoài vùng kéo (no-drag) để bấm được, và bấm 📄 mở danh sách giấy nhớ
+  {
+    const ghostNoDrag = [...document.querySelectorAll('.ghost')]
+      .every((b) => getComputedStyle(b).getPropertyValue('-webkit-app-region') === 'no-drag');
+    ok('nút-thanh-trên-bấm-được', ghostNoDrag);
+    document.getElementById('btnNotes').click();
+    await sleep(200);
+    const opened = document.getElementById('notesPop').classList.contains('open');
+    ok('nút-📄-mở-danh-sách-giấy-nhớ', opened);
+  }
+
   return out;
 })()
 `;

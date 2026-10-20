@@ -73,6 +73,7 @@ html, body {
   width: 28px; height: 26px; border-radius: 8px;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; opacity: .8;
+  -webkit-app-region: no-drag; /* quan trọng: bấm được trong vùng kéo của OS */
 }
 .ghost:hover { background: rgba(255, 255, 255, 0.16); opacity: 1; }
 .ghost.active { background: rgba(255, 255, 255, 0.22); opacity: 1; }
