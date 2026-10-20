@@ -238,11 +238,37 @@
 
   /* ========================= popover ========================= */
 
+  function anchorForPop(name) {
+    if (name === 'notesPop') return $('#btnNotes');
+    return document.querySelector('.pop-toggle[data-pop="' + name + '"]');
+  }
+
+  // Đặt menu dropdown tại vị trí vừa khít cửa sổ: mở xuống dưới nút;
+  // nếu không đủ chỗ thì tự lật mở lên trên. Luôn hiển thị trọn vẹn, không bị cắt.
+  function positionPop(pop, name) {
+    const btn = anchorForPop(name);
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const pw = Math.min(pop.offsetWidth || 240, window.innerWidth - 12);
+    const ph = pop.offsetHeight || 260;
+    const gap = 6;
+    const left = Math.min(Math.max(gap, r.right - pw), window.innerWidth - pw - gap);
+    let top = r.bottom + gap;
+    if (top + ph > window.innerHeight - gap && r.top - gap - ph > gap) {
+      top = r.top - ph - gap; // mở lên trên
+    } else {
+      top = Math.max(gap, Math.min(top, window.innerHeight - gap - ph));
+    }
+    pop.style.left = Math.max(gap, left) + 'px';
+    pop.style.top = top + 'px';
+  }
+
   function togglePop(name) {
     const pop = $('#' + name);
     const open = pop.classList.toggle('open');
     $$('.pop').forEach((p) => { if (p !== pop) p.classList.remove('open'); });
     $$('.pop-toggle').forEach((b) => b.classList.toggle('active', b.dataset.pop === name && open));
+    if (open) positionPop(pop, name);
     syncToolbar();
     return open;
   }

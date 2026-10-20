@@ -132,6 +132,30 @@ const SELF_TEST_SOURCE = `
     await sleep(200);
     const opened = document.getElementById('notesPop').classList.contains('open');
     ok('nút-📄-mở-danh-sách-giấy-nhớ', opened);
+    document.getElementById('btnNotes').click(); // đóng lại
+    await sleep(120);
+  }
+
+  // 15. Menu 3 chấm luôn hiển thị trọn vẹn ngay cả khi giấy ngắn hơn menu
+  {
+    const noteId = new URLSearchParams(location.search).get('id');
+    // thu nhỏ cửa sổ để giấy ngắn hơn menu
+    await window.sticky.resizeWindow(noteId, 220, 170);
+    await sleep(300);
+    const moreBtn = document.querySelector('.pop-toggle[data-pop="morePop"]');
+    moreBtn.click();
+    await sleep(200);
+    const mp = document.getElementById('morePop');
+    const mr = mp.getBoundingClientRect();
+    const fits = mp.classList.contains('open') &&
+      mr.top >= 2 && mr.bottom <= window.innerHeight - 2 &&
+      mr.left >= 2 && mr.right <= window.innerWidth - 2;
+    ok('menu-3-chấm-không-bị-cắt-khi-giấy-ngắn', fits, mr.top + ',' + mr.bottom + ',' + mr.left + ',' + mr.right + ' h=' + window.innerHeight);
+    // đóng menu rồi trả về kích thước bình thường
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await sleep(150);
+    await window.sticky.resizeWindow(noteId, 280, 265);
+    await sleep(300);
   }
 
   return out;
