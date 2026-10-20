@@ -72,7 +72,6 @@
     scheduleSave();
     requestAnimationFrame(() => autoGrow(true));
     updateCounters();
-    editor.focus();
   }
 
   /* ========================= font ========================= */
@@ -272,15 +271,21 @@
     return open;
   }
 
-  // Thanh công cụ tự ẩn khi không soạn thảo; hiện lại khi đang gõ, rê chuột
-  // lên thanh công cụ, hoặc đang mở menu.
+  // Thanh công cụ tự ẩn khi không soạn thảo; hiện lại khi đang gõ/bấm,
+  // rê chuột lên thanh công cụ, hoặc đang mở menu.
   let toolbarHover = false;
+  let lastInteract = 0;
+  let hideTimer = null;
+  function markInteract() {
+    lastInteract = Date.now();
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(syncToolbar, 1550);
+    syncToolbar();
+  }
   function syncToolbar() {
-    const active = document.activeElement;
-    const focusInNote = (editor === active || editor.contains(active)) ||
-                        (titleInput === active || titleInput.contains(active));
+    const interact = Date.now() - lastInteract < 1500;
     const popOpen = !!document.querySelector('.pop.open');
-    $('#toolbar').classList.toggle('collapsed', !(focusInNote || popOpen || toolbarHover));
+    $('#toolbar').classList.toggle('collapsed', !(interact || popOpen || toolbarHover));
   }
 
   /* ========================= kéo chỉnh kích thước ========================= */
@@ -389,11 +394,12 @@
       }
     });
 
-    // thanh công cụ tự ẩn/hiện
-    editor.addEventListener('focusin', syncToolbar);
-    editor.addEventListener('focusout', () => setTimeout(syncToolbar, 150));
-    titleInput.addEventListener('focusin', syncToolbar);
-    titleInput.addEventListener('focusout', () => setTimeout(syncToolbar, 150));
+    // thanh công cụ tự ẩn/hiện theo tương tác
+    editor.addEventListener('pointerdown', markInteract);
+    editor.addEventListener('keydown', markInteract);
+    editor.addEventListener('input', markInteract);
+    titleInput.addEventListener('pointerdown', markInteract);
+    titleInput.addEventListener('input', markInteract);
     const tb = $('#toolbar');
     tb.addEventListener('mouseenter', () => { toolbarHover = true; syncToolbar(); });
     tb.addEventListener('mouseleave', () => { toolbarHover = false; syncToolbar(); });
