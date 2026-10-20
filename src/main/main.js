@@ -19,6 +19,42 @@ let capturing = process.argv.includes('--capture');
 let selftest = process.argv.includes('--selftest');
 let suppressGeoSave = false; // tạm lờ lưu kích thước khi mở rộng cho dropdown
 
+/* ------------------------------- screenshots ------------------------------- */
+
+// Chụp vài ảnh demo phục vụ mô tả README/GitHub.
+async function captureScreenshots(win) {
+  const dir = path.join(process.cwd(), 'captures');
+  fs.mkdirSync(dir, { recursive: true });
+  const shot = async (name) => {
+    const img = await win.webContents.capturePage();
+    fs.writeFileSync(path.join(dir, name + '.png'), img.toPNG());
+    console.log('capture → captures/' + name + '.png');
+  };
+
+  await new Promise((r) => setTimeout(r, 700));
+  await shot('demo');
+
+  // mở menu tùy chọn (⋯)
+  try {
+    await win.webContents.executeJavaScript(`document.querySelector('.pop-toggle[data-pop="morePop"]').click(); true;`);
+    await new Promise((r) => setTimeout(r, 350));
+    await shot('dropdown');
+    await win.webContents.executeJavaScript(`document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); true;`);
+    await new Promise((r) => setTimeout(r, 250));
+  } catch (e) { console.error('capture dropdown lỗi', e); }
+
+  // mở danh sách giấy nhớ (📄)
+  try {
+    await win.webContents.executeJavaScript(`document.getElementById('btnNotes').click(); true;`);
+    await new Promise((r) => setTimeout(r, 350));
+    await shot('notes');
+    await win.webContents.executeJavaScript(`document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); true;`);
+    await new Promise((r) => setTimeout(r, 200));
+  } catch (e) { console.error('capture notes lỗi', e); }
+
+  if (capturing) { quitting = true; app.exit(0); }
+}
+
 /* ------------------------------- selftest ------------------------------- */
 
 // Chạy tự kiểm tra trong renderer rồi in kết quả và thoát (mã 0 = pass).
@@ -340,7 +376,7 @@ function createNoteWindow(note) {
   win.once('ready-to-show', () => {
     win.show();
     if (capturing) {
-      setTimeout(() => captureDemo(win), 1500);
+      setTimeout(() => captureScreenshots(win), 1200);
     }
   });
 

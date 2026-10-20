@@ -1,10 +1,23 @@
-# 🪟 Sticky Glass
+<p align="center">
+  <img src="captures/demo.png" alt="Sticky Glass" width="360">
+</p>
 
-Tờ **giấy nhớ trong suốt** dán thẳng lên desktop, viết nhanh, đẹp và tối giản — dành cho Windows & macOS.
+<h1 align="center">🪟 Sticky Glass</h1>
 
-> Chữ luôn rõ 100%. Nền giấy có thể chỉnh từ **trong suốt → mờ → đậm** để nhìn xuyên qua ảnh nền desktop.
+<p align="center">
+  <b>Tờ giấy nhớ trong suốt</b> dán thẳng lên desktop — viết nhanh, đẹp, tối giản.<br>
+  Windows & macOS · chạy ngầm ở khay hệ thống · chữ luôn rõ 100%, nền chỉnh trong suốt–mờ–đậm
+</p>
 
-![Ảnh chụp màn hình](captures/demo.png)
+<p align="center">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-✓-0078d6">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-✓-a2aaad">
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-44-47848f">
+</p>
+
+![Giao diện chính](captures/demo.png)
+![Menu tùy chọn](captures/dropdown.png)
+![Danh sách giấy nhớ](captures/notes.png)
 
 ---
 
@@ -12,59 +25,47 @@ Tờ **giấy nhớ trong suốt** dán thẳng lên desktop, viết nhanh, đ�
 
 | # | Tính năng |
 |---|-----------|
-| 1 | Soạn thảo rich-text: **màu chữ**, danh sách chấm đầu dòng |
-| 2 | Nút **A+ / A−** tăng giảm cỡ chữ nhanh (10–40px) |
-| 3 | **Font chữ tùy chỉnh**: tự cài `.ttf / .otf / .woff2` qua menu **⋯ → Cài font chữ**; chọn font ngay trong menu ⋯ |
-| 4 | Giao diện kính mờ: khung trắng, chữ trắng, tối giản, hiện đại, ṕ blur nền |
-| 5 | Hai chế độ: **📌 Ghim luôn ở trên** (Always on top) ↔ bình thường |
+| 1 | Soạn thảo nhanh: danh sách chấm đầu dòng, màu chữ, cỡ chữ **A+ / A−** |
+| 2 | **Nền kính mờ**: chỉnh độ trong suốt (đậm → mờ → trong suốt) bằng nút **◐** — chữ luôn đậm 100% |
+| 3 | [Font chữ tùy chỉnh**: tự cài `.ttf / .otf / .woff2` qua menu **⋯ → Cài font chữ** |
+| 4 | Giao diện **nền đen tối giản**, viền trắng nét, góc bo 5px, thanh công cụ **tự ẩn/hiện** khi soạn |
+| 5 | **📌 Ghim luôn ở trên** (Always on top) ↔ bình thường |
 | 6 | Không chiếm taskbar — sống trong **khay hệ thống** (cạnh đồng hồ) |
-| 7 | **Kéo kích thước** 8 hướng; chữ tự xuống dòng / dãn ra theo diện tích |
-| 8 | Viết dài **tự mở rộng xuống dưới**, không thanh cuộn |
-| 9 | **Tự khởi động cùng máy tính** (bật/tắt trong tùy chọn) |
-| 10 | Gõ nhanh kiểu markdown: `# ` → H1, `### ` → H3, `[] ` → ô tích, `* ` → chấm đầu dòng, `1. ` → đánh số |
-| 11 | Nhiều giấy nhớ cùng lúc, mỗi tờ nhớ vị trí, kích thước, kiểu chữ riêng |
-| 12 | Đếm từ / ký tự |
+| 7 | Kéo kích thước 8 hướng; chữ tự xuống dòng theo bề rộng |
+| 8 | Giấy **cố định kích thước**, không tự phình khi gõ; cuộn nhẹ khi chữ dài |
+| 9 | **Tự khởi động cùng máy** (bật/tắt trong menu ⋯) |
+| 10 | Gõ nhanh: `* ` + phím cách → danh sách chấm |
+| 11 | Nhiều giấy nhớ cùng lúc, mỗi tờ nhớ vị trí/kích thước/kiểu riêng; nút **📄** xem & chuyển |
+| 12 | Đếm từ / ký tự ở footer |
 | 13 | Menu chuột phải ngay trong giấy: cỡ chữ, danh sách, copy/paste |
-| 16 | Thanh công cụ **tự ẩn** khi không soạn thảo, tự hiện lại khi gõ chữ hoặc rê chuột lên |
 | 14 | Xuất giấy nhớ ra file `.txt` |
-| 15 | Phím tắt toàn cục **Ctrl+Shift+N**: hiện/ẩn tất cả giấy nhớ |
+| 15 | Menu dropdown **tràn ra ngoài giấy**, tự lật lên khi thiếu chỗ, không bao giờ bị cắt |
+| 16 | Phím tắt toàn cục **Ctrl+Shift+N**: hiện/ẩn tất cả giấy nhớ |
 
 ---
 
 ## 🚀 Cài đặt
 
 ### Windows
-1. Tải bộ cài **`StickyGlass-Setup-1.0.0.exe`** từ thư mục `dist/` (hoặc từ [GitHub Actions](https://github.com/) artifacts).
-2. Chạy file exe, cài đặt xong ứng dụng tự mở.
-3. (Tùy chọn) Bật *"Tự khởi động cùng máy"* trong menu ⋯ của giấy nhớ.
+1. Tải **`StickyGlass-Setup-1.0.0.exe`** (bản build sẵn trong thư mục `dist/`, hoặc từ **Actions** trên GitHub).
+2. Chạy file exe → ứng dụng tự mở.
 
 ### macOS
-1. Bộ cài `.dmg` phải được build trên máy Mac — xem phần *"Build bộ cài"* bên dưới cho 2 cách (local / GitHub Actions).
-2. Mở DMG, kéo **Sticky Glass** vào thư mục `Applications`.
-3. Lần đầu mở: chuột phải → *Open* (hoặc vào *System Settings → Privacy & Security*) vì ứng dụng chưa ký số.
-4. Nếu muốn ứng dụng nằm ở menu bar thay vì Dock: tắt *"Show in Dock"* trong tùy chọn Dock.
+- Bộ cài `.dmg` cần build trên máy Mac (xem bên dưới).
 
 ---
 
 ## 🛠 Build bộ cài
 
-### Yêu cầu
-- Node.js ≥ 20 (máy dev)
-- Windows: build `.exe` (NSIS); macOS: build `.dmg`
+| Nền tảng | Lệnh | Kết quả |
+|---|---|---|
+| Windows | `npm run dist:win` | `dist/StickyGlass-Setup-1.0.0.exe` |
+| macOS | `npm run dist:mac` (chạy trên macOS) | `dist/StickyGlass-1.0.0-arm64.dmg` (và x64) |
 
-```bash
-npm install
-npm run icons          # sinh icon (đã có sẵn trong build/)
-npm run dist:win       # → dist/StickyGlass-Setup-1.0.0.exe
-npm run dist:mac       # → dist/StickyGlass-1.0.0-x64.dmg / arm64.dmg (chỉ chạy được trên macOS)
-```
-
-> ⚠️ `electron-builder` chỉ tạo được `.dmg` khi chạy **trên macOS** (do Apple định dạng). Trên Windows chỉ build được `.exe`.
-
-### Cách nhận cả `.exe` lẫn `.dmg` không cần máy Mac
-1. Push repo lên GitHub.
-2. Vào tab **Actions → Build installers → Run workflow** (hoặc push tag `v1.0.0`).
-3. Pipeline tự build cả hai trên `windows-latest` và `macos-13`, tải về từ phần **Artifacts**.
+### Cách lấy cả `.exe` lẫn `.dmg` không cần máy Mac
+Repo này có sẵn **GitHub Actions** (`.github/workflows/build.yml`):
+1. Vào tab **Actions → Build installers → Run workflow** (hoặc push tag `v1.0.0`).
+2. Pipeline tự build cả hai trên `windows-latest` + `macos-13` → tải từ **Artifacts**.
 
 ---
 
@@ -72,30 +73,26 @@ npm run dist:mac       # → dist/StickyGlass-1.0.0-x64.dmg / arm64.dmg (chỉ c
 
 | Phím | Tác dụng |
 |------|----------|
-| `Ctrl+B / I / U` | Đậm / nghiêng / gạch chân |
-| `#␣` | Tiêu đề H1 |
-| `##␣` / `###␣` | H2 / H3 |
 | `*␣` | Danh sách chấm đầu dòng |
-| `*␣` / `1.␣` | Danh sách chấm / đánh số |
 | `Ctrl+Shift+N` | Hiện/ẩn tất cả giấy nhớ (toàn cục) |
-| `Enter` | Trong ô tích: tạo ô tích mới |
-| `Backspace` | Trong ô tích rỗng: xóa ô tích |
+| A+ / A− | Tăng / giảm cỡ chữ |
 
 ---
 
 ## ⚙️ Cấu trúc
 
 ```
-sticky-note/
+glass-sticky-note/
 ├─ src/
 │  ├─ main/
-│  │  ├─ main.js      # cửa sổ trong suốt, tray, auto-start, IPC
+│  │  ├─ main.js      # cửa sổ trong suốt, tray, auto-start, IPC, selftest
 │  │  ├─ store.js     # lưu giấy nhớ (userData/notes.json)
 │  │  └─ fonts.js     # cài font tùy chỉnh
 │  ├─ preload.js      # cầu nối an toàn
 │  └─ renderer/       # giao diện (HTML/CSS/JS thuần)
 ├─ scripts/make-icons.js  # sinh icon không cần công cụ ngoài
 ├─ build/             # icon.ico / icon.png
+├─ captures/          # ảnh demo cho README
 └─ .github/workflows/build.yml
 ```
 
@@ -105,27 +102,32 @@ sticky-note/
 
 ---
 
-## ❓ Câu hỏi thường gặp
-
-**Làm sao để tự cài font?**
-Vào menu **⋯ → Cài font chữ**, chọn file `.ttf/.otf`. Font xuất hiện trong ô chọn font (cũng nằm trong menu ⋯) của mọi giấy nhớ.
-
-**Nền trong suốt quá, đọc không thấy chữ?**
-Nút **◐** trên thanh công cụ: kéo slider hoặc bấm *Trong suốt / Mờ / Đậm*. Chữ luôn giữ độ đậm 100%.
-
-**Muốn giấy cố định kích thước, không tự phồng?**
-Menu **⋯ → bỏ tích "Tự mở rộng khi viết kín"** — khi đó kéo chỉnh kích thước thủ công hoàn toàn.
-
-**Ứng dụng chạy ngầm ở đâu?**
-Biểu tượng trắng nhỏ ở khay hệ thống (cạnh đồng hồ). Bấm đúp để hiện/ẩn tất cả giấy nhớ, chuột phải để quản lý.
-
----
-
 ## 🧪 Chạy bản phát triển
 
 ```bash
 npm install
-npm start
+npm start          # chạy app
+npm test           # chạy bộ tự kiểm tra (selftest) — mọi lỗi tự động báo
+npm run icons      # tái tạo icon nếu cần
 ```
 
-Thêm flag `--capture` để chụp ảnh màn hình demo vào `captures/demo.png`.
+---
+
+## ❓ Câu hỏi thường gặp
+
+**Làm sao cài font tự chọn?**
+Menu **⋯ → Cài font chữ**, chọn `.ttf/.otf`. Font xuất hiện trong ô chọn font (menu ⋯) của mọi giấy nhớ.
+
+**Nền trong suốt quá?**
+Nút **◐**: kéo slider hoặc bấm *Trong suốt / Mờ / Đậm* — chữ luôn rõ 100%.
+
+**Muốn kéo giấy?**
+Nắm **khoảng trống phía trên** (cạnh tiêu đề) để kéo di chuyển; bấm đúng chữ tiêu đề mới sửa title. Kéo mép/góc dưới để đổi kích thước.
+
+**Tắt app?**
+Chuột phải tray icon → **Thoát Sticky Glass**, hoặc **⋯ → Thoát**.
+
+---
+
+## 📄 Giấy phép
+MIT
