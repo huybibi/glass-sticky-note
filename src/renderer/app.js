@@ -123,37 +123,11 @@
     document.execCommand(cmd, false, val);
   }
 
-  function insertTask() {
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return null;
-    const range = sel.getRangeAt(0);
-    const task = document.createElement('div');
-    task.className = 'task';
-    task.innerHTML = '<span class="cb" contenteditable="false"></span><div class="tx" contenteditable="true"></div>';
-    range.deleteContents();
-    range.insertNode(task);
-
-    // nếu vừa chèn vào trong <p> (ví dụ sau khi bấm Enter), đưa ô tích ra ngoài
-    // để cấu trúc phẳng, tránh lỗi con trỏ đặt sai chỗ.
-    let parent = task.parentElement;
-    if (parent && parent !== editor && parent.tagName === 'P') {
-      parent.parentNode.insertBefore(task, parent.nextSibling);
-      if (!parent.textContent.trim()) parent.remove();
-    }
-
-    const tx = task.querySelector('.tx');
-    placeCaretAtEnd(tx);
-    tx.focus();
-    updateCounters();
-    onChange();
-    return { task, tx };
-  }
-
   function runCommand(cmd) {
     switch (cmd) {
       case 'insertUnorderedList': exec('insertUnorderedList'); break;
       case 'insertOrderedList': exec('insertOrderedList'); break;
-      case 'task': insertTask(); break;
+      case 'strikeThrough': exec('strikeThrough'); break;
       case 'font-size-inc': changeFontSize(+1); break;
       case 'font-size-dec': changeFontSize(-1); break;
     }
@@ -203,12 +177,7 @@
     if (!block) return;
     const text = block.textContent;
 
-    const m = /^\[ ?\]$/.exec(text);
-    if (m) {
-      e.preventDefault();
-      block.innerHTML = '';
-      insertTask();
-    } else if (text === '-' || text === '*') {
+    if (text === '-' || text === '*') {
       e.preventDefault();
       block.innerHTML = '';
       exec('insertUnorderedList');
@@ -228,56 +197,6 @@
     sel.addRange(r);
   }
 
-  /* ========================= checklist ========================= */
-
-  function handleEditorPointerDown(e) {
-    const cb = e.target.closest && e.target.closest('.cb');
-    if (cb) {
-      e.preventDefault();
-      e.stopPropagation();
-      const task = cb.closest('.task');
-      if (task) {
-        task.classList.toggle('done');
-        cb.setAttribute('aria-checked', task.classList.contains('done') ? 'true' : 'false');
-        updateCounters();
-        onChange();
-      }
-    }
-  }
-
-  function handleEditorKeydown(e) {
-    const task = e.target.closest && e.target.closest('.task');
-    if (!task) return;
-
-    const tx = e.target.closest('.tx');
-    if (!tx) return;
-    const empty = tx.textContent.trim() === '';
-
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (empty) return; // Enter trên dòng trống: không tạo thêm
-      const next = document.createElement('div');
-      next.className = 'task';
-      next.innerHTML = '<span class="cb" contenteditable="false"></span><div class="tx" contenteditable="true"></div>';
-      task.after(next);
-      const ntx = next.querySelector('.tx');
-      placeCaretAtEnd(ntx);
-      ntx.focus();
-      updateCounters();
-      onChange();
-    } else if (e.key === 'Backspace' && empty) {
-      const prev = task.previousElementSibling;
-      if (prev && prev.classList.contains('task')) {
-        e.preventDefault();
-        task.remove();
-        placeCaretAtEnd(prev.querySelector('.tx'));
-        prev.querySelector('.tx').focus();
-        updateCounters();
-        onChange();
-      }
-    }
-  }
-
   /* ========================= đếm ========================= */
 
   function updateCounters() {
@@ -285,9 +204,7 @@
     const words = (text.trim().match(/\S+/g) || []).length;
     const chars = text.replace(/\n/g, '').length;
     wordCounter.textContent = `${words} từ · ${chars} ký tự`;
-    const done = editor.querySelectorAll('.task.done').length;
-    const total = editor.querySelectorAll('.task').length;
-    taskCounter.textContent = total ? `${done}/${total} việc đã xong` : '';
+    taskCounter.textContent = '';
   }
 
   /* ========================= auto-grow ========================= */
@@ -483,8 +400,6 @@
 
     // editor
     editor.addEventListener('input', onChange);
-    editor.addEventListener('keydown', handleEditorKeydown);
-    editor.addEventListener('pointerdown', handleEditorPointerDown);
     editor.addEventListener('beforeinput', handleSpaceBeforeInput);
     editor.addEventListener('blur', scheduleSave);
 
@@ -509,7 +424,7 @@
     const items = [
       ['Tăng cỡ chữ', () => changeFontSize(+1)],
       ['Giảm cỡ chữ', () => changeFontSize(-1)],
-      ['Checklist', () => insertTask()],
+      ['Gạch ngang', () => exec('strikeThrough')],
       ['Danh sách chấm', () => exec('insertUnorderedList')],
       ['---'],
       ['Sao chép', () => exec('copy')],
@@ -533,7 +448,6 @@
   /* ========================= test hooks ========================= */
 
   window.__ui = {
-    insertTask,
     runCommand,
     exec,
     changeFontSize,

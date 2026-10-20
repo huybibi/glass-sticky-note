@@ -27,7 +27,7 @@ html, body {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(12, 14, 20, var(--alpha));
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   backdrop-filter: blur(16px) saturate(150%);
@@ -73,7 +73,7 @@ html, body {
 
 /* ---------- thanh công cụ ---------- */
 .toolbar {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px;
   padding: 6px 8px;
   flex: none;
   background: var(--tool-bg);
@@ -99,15 +99,19 @@ html, body {
 .toolbar button:hover { background: rgba(255, 255, 255, 0.16); opacity: 1; }
 .toolbar button.active { background: rgba(255, 255, 255, 0.26); opacity: 1; }
 
-.toolbar select {
-  height: 26px; max-width: 132px;
-  background: rgba(0, 0, 0, 0.18);
-  color: inherit; border: 1px solid var(--tool-border);
-  border-radius: 8px; padding: 0 6px;
-  font-size: 12px; font-family: inherit;
+#fontSelect {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px; font-family: inherit;
   outline: none; cursor: pointer;
 }
-.toolbar select option { color: #111; background: #fff; }
+#fontSelect option { color: #fff; background: #16181f; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.field > span { font-size: 12px; opacity: 0.62; }
 
 .colorbtn { position: relative; width: 26px; height: 26px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; opacity: .85; }
 .colorbtn:hover { background: rgba(255,255,255,.16); opacity: 1; }

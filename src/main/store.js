@@ -21,6 +21,16 @@ const DEFAULT_SETTINGS = {
   defaultTextColor: '#ffffff',
 };
 
+/** Loại bỏ cấu trúc checkbox cũ (nếu có) trong HTML đã lưu. */
+function sanitizeLegacyHtml(html) {
+  return String(html || '').replace(/<div class="task"[^>]*>([\s\S]*?)<\/div>/g, (_m, inner) => {
+    const innerClean = inner
+      .replace(/<span class="cb"[^>]*><\/span>/g, '')
+      .replace(/<div class="tx"[^>]*>([\s\S]*?)<\/div>/g, '$1');
+    return '<p>' + innerClean + '</p>';
+  });
+}
+
 function noteTemplate() {
   const now = Date.now();
   return {
@@ -47,14 +57,12 @@ function welcomeNote() {
     '<p style="font-size:1.35em;font-weight:700;margin:.1em 0 .25em">Sticky Glass</p>' +
     '<p>Tờ giấy nhớ trong suốt, dán thẳng lên desktop của bạn.</p>' +
     '<p>Bạn có thể kéo để di chuyển, kéo mép để đổi kích thước — chữ tự xuống dòng theo bề rộng.</p>' +
-    '<p style="margin-top:.5em">Thử ngay:</p>' +
-    '<div class="task"><span class="cb" contenteditable="false"></span><div class="tx">Bấm vào ô vuông để tích việc đã xong</div></div>' +
-    '<div class="task"><span class="cb" contenteditable="false"></span><div class="tx">Gõ <b>[] </b> + phím cách để tạo ô tích mới</div></div>' +
-    '<div class="task"><span class="cb" contenteditable="false"></span><div class="tx">Gõ <b>* </b> + phím cách để có danh sách chấm đầu dòng</div></div>' +
     '<p style="margin-top:.5em">Mẹo:</p>' +
-    '<ul><li>Nút <b>◐</b> để chỉnh độ trong suốt nền (đậm → mờ → trong suốt)</li>' +
+    '<ul><li>Chọn dòng chữ → bấm nút <b>S̶</b> (hoặc chuột phải → Gạch ngang) để gạch việc đã làm xong</li>' +
+    '<li>Nút <b>◐</b> để chỉnh độ trong suốt nền (đậm → mờ → trong suốt)</li>' +
     '<li>Nút <b>📌</b> để ghim luôn ở trên các cửa sổ khác</li>' +
     '<li>Nút <b>A+ / A−</b> để tăng giảm cỡ chữ nhanh</li>' +
+    '<li>Menu <b>⋯</b> chứa chọn font chữ, tự khởi động cùng máy…</li>' +
     '<li>Biểu tượng khay hệ thống (cạnh đồng hồ) để quản lý giấy nhớ</li></ul>' +
     '<p><i>Chúc bạn ghi chú vui vẻ ✨</i></p>';
   return n;
@@ -67,9 +75,10 @@ function load() {
   filePath = path.join(dir, 'notes.json');
   try {
     const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const notes = Array.isArray(raw.notes) && raw.notes.length ? raw.notes : [];
     state = {
       settings: { ...DEFAULT_SETTINGS, ...(raw.settings || {}) },
-      notes: Array.isArray(raw.notes) && raw.notes.length ? raw.notes : [],
+      notes: notes.map((n) => ({ ...n, html: sanitizeLegacyHtml(n.html) })),
     };
     if (!state.notes.length) {
       state.notes.push(welcomeNote());

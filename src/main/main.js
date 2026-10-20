@@ -28,21 +28,27 @@ const SELF_TEST_SOURCE = `
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const ui = window.__ui;
 
-  // 1. Thanh công cụ đã bỏ H1/H2/H3/đậm/nghiêng/gạch chân
-  const banned = ['h1', 'h2', 'h3', 'bold', 'italic', 'underline', 'strikeThrough'];
+  // 1. Thanh công cụ đã bỏ H1/H2/H3/đậm/nghiêng/gạch chân + checkbox
+  const banned = ['h1', 'h2', 'h3', 'bold', 'italic', 'underline', 'task'];
   const missing = banned.every((c) => !document.querySelector('[data-cmd="' + c + '"]'));
-  ok('toolbar-đã-bỏ-định-dạng', missing, banned.join(','));
+  ok('toolbar-đã-bỏ-định-dạng-và-checkbox', missing, banned.join(','));
 
-  // 2. Cài đặt mặc định tắt auto-grow
+  // 2. Có nút gạch ngang
+  ok('có-nút-gạch-ngang', !!document.querySelector('[data-cmd="strikeThrough"]'));
+
+  // 3. Không còn ô tích cũ trong nội dung tải lên
+  ok('không-còn-checkbox-trong-nội-dung', !document.querySelector('.task'));
+
+  // 4. Cài đặt mặc định tắt auto-grow
   const settings = await window.sticky.getSettings();
   ok('autoGrow-mặc-định-tắt', settings.autoGrow === false);
 
-  // 3. Nền đen (kênh RGB < 80)
+  // 5. Nền đen (kênh RGB < 80)
   const bg = getComputedStyle(document.querySelector('.note')).backgroundColor;
   const m = bg.match(/\\d+/g);
   ok('nền-đen', m && m.slice(0, 3).every((v) => +v < 80), bg);
 
-  // 4. Gõ chữ không làm khung phình to
+  // 6. Gõ chữ không làm khung phình to
   const editor = ui.editor;
   const h0 = window.innerHeight;
   editor.innerHTML = '';
@@ -50,48 +56,30 @@ const SELF_TEST_SOURCE = `
   editor.textContent = 'Xin chào, đây là dòng chữ thử nghiệm để kiểm tra không phình khung.';
   editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
   await sleep(450);
-  const h1 = window.innerHeight;
-  ok('gõ-chữ-không-phình-khung', Math.abs(h1 - h0) <= 2, h0 + ' -> ' + h1);
+  ok('gõ-chữ-không-phình-khung', Math.abs(window.innerHeight - h0) <= 2, h0 + ' -> ' + window.innerHeight);
 
-  // 5. Tạo checkbox: tồn tại + con trỏ nằm đúng trong ô nội dung
+  // 7. Gạch ngang bật/tắt trên vùng chọn
+  editor.innerHTML = '<div>hello world</div>';
+  const tnode = editor.querySelector('div').firstChild;
+  const r = document.createRange();
+  r.setStart(tnode, 0); r.setEnd(tnode, 5);
+  const s = window.getSelection();
+  s.removeAllRanges(); s.addRange(r);
+  ui.runCommand('strikeThrough');
+  await sleep(60);
+  const struck = editor.innerHTML.toLowerCase().includes('strike');
+  ui.runCommand('strikeThrough');
+  await sleep(60);
+  const unstruck = !editor.innerHTML.toLowerCase().includes('strike') || editor.querySelectorAll('strike').length === 0;
+  ok('gạch-ngang-bật/tắt', struck && unstruck, editor.innerHTML.slice(0, 60));
+
+  // 8. Enter không bị chặn (không có handler nào preventDefault)
   editor.innerHTML = '';
   editor.focus();
-  const made = ui.insertTask();
-  const taskEl = made && made.task;
-  ok('tạo-checkbox', !!taskEl);
-  let caretOk = false;
-  if (taskEl) {
-    const s = window.getSelection();
-    const n = s.anchorNode;
-    caretOk = !!(n && n.nodeType === 3 ? n.parentElement.closest('.tx') : (n && n.classList && n.classList.contains('tx')));
-  }
-  ok('con-trỏ-đúng-vị-trí', caretOk);
-
-  // 6. Bấm checkbox → tích/gỡ
-  if (taskEl) {
-    const cb = taskEl.querySelector('.cb');
-    cb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-    const done1 = taskEl.classList.contains('done');
-    cb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-    const done2 = taskEl.classList.contains('done');
-    ok('bấm-checkbox-tích/gỡ', done1 === true && done2 === false, done1 + '/' + done2);
-  }
-
-  // 7. Gõ '[] ' vẫn tạo được checkbox nhanh
-  editor.innerHTML = '';
-  editor.focus();
-  editor.textContent = '[]';
-  editor.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: ' ', inputType: 'insertText' }));
-  await sleep(80);
-  ok('phím-tắt-[]-còn-hoạt-động', !!editor.querySelector('.task'));
-
-  // 8. Không còn H1 khi gõ '# '
-  editor.innerHTML = '';
-  editor.focus();
-  editor.textContent = '#';
-  editor.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: ' ', inputType: 'insertText' }));
-  await sleep(80);
-  ok('không-còn-H1-từ-#', !editor.querySelector('h1'));
+  let blocked = false;
+  editor.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.defaultPrevented) blocked = true; }, { once: true });
+  editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+  ok('enter-không-bị-chặn', !blocked);
 
   return out;
 })()

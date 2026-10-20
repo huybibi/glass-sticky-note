@@ -12,9 +12,9 @@ Tờ **giấy nhớ trong suốt** dán thẳng lên desktop, viết nhanh, đ�
 
 | # | Tính năng |
 |---|-----------|
-| 1 | Soạn thảo rich-text: **màu chữ**, **đậm/nghiêng/gạch chân**, **H1/H2/H3**, **checklist** (ô tích), danh sách chấm / đánh số |
+| 1 | Soạn thảo rich-text: **màu chữ**, **gạch ngang** (S̶) cho việc đã xong, danh sách chấm / đánh số |
 | 2 | Nút **A+ / A−** tăng giảm cỡ chữ nhanh (10–40px) |
-| 3 | **Font chữ tùy chỉnh**: tự cài `.ttf / .otf / .woff2` qua nút *"Cài font chữ"* |
+| 3 | **Font chữ tùy chỉnh**: tự cài `.ttf / .otf / .woff2` qua menu **⋯ → Cài font chữ**; chọn font ngay trong menu ⋯ |
 | 4 | Giao diện kính mờ: khung trắng, chữ trắng, tối giản, hiện đại, ṕ blur nền |
 | 5 | Hai chế độ: **📌 Ghim luôn ở trên** (Always on top) ↔ bình thường |
 | 6 | Không chiếm taskbar — sống trong **khay hệ thống** (cạnh đồng hồ) |
@@ -23,8 +23,8 @@ Tờ **giấy nhớ trong suốt** dán thẳng lên desktop, viết nhanh, đ�
 | 9 | **Tự khởi động cùng máy tính** (bật/tắt trong tùy chọn) |
 | 10 | Gõ nhanh kiểu markdown: `# ` → H1, `### ` → H3, `[] ` → ô tích, `* ` → chấm đầu dòng, `1. ` → đánh số |
 | 11 | Nhiều giấy nhớ cùng lúc, mỗi tờ nhớ vị trí, kích thước, kiểu chữ riêng |
-| 12 | Đếm từ / ký tự; đếm tiến độ checklist `2/5 việc đã xong` |
-| 13 | Menu chuột phải ngay trong giấy: đậm, cỡ chữ, H1, checklist, copy/paste |
+| 12 | Đếm từ / ký tự |
+| 13 | Menu chuột phải ngay trong giấy: cỡ chữ, gạch ngang, danh sách, copy/paste |
 | 14 | Xuất giấy nhớ ra file `.txt` |
 | 15 | Phím tắt toàn cục **Ctrl+Shift+N**: hiện/ẩn tất cả giấy nhớ |
 
@@ -74,7 +74,8 @@ npm run dist:mac       # → dist/StickyGlass-1.0.0-x64.dmg / arm64.dmg (chỉ c
 | `Ctrl+B / I / U` | Đậm / nghiêng / gạch chân |
 | `#␣` | Tiêu đề H1 |
 | `##␣` / `###␣` | H2 / H3 |
-| `[]␣` | Ô tích (checklist) |
+| `S̶` / menu chuột phải | Gạch ngang dòng chữ đã hoàn thành |
+| `*␣` / `1.␣` | Danh sách chấm / đánh số |
 | `*␣` / `1.␣` | Danh sách chấm / đánh số |
 | `Ctrl+Shift+N` | Hiện/ẩn tất cả giấy nhớ (toàn cục) |
 | `Enter` | Trong ô tích: tạo ô tích mới |
@@ -107,7 +108,7 @@ sticky-note/
 ## ❓ Câu hỏi thường gặp
 
 **Làm sao để tự cài font?**
-Vào menu **⋯ → Cài font chữ**, chọn file `.ttf/.otf`. Font xuất hiện trong dropdown font của mọi giấy nhớ.
+Vào menu **⋯ → Cài font chữ**, chọn file `.ttf/.otf`. Font xuất hiện trong ô chọn font (cũng nằm trong menu ⋯) của mọi giấy nhớ.
 
 **Nền trong suốt quá, đọc không thấy chữ?**
 Nút **◐** trên thanh công cụ: kéo slider hoặc bấm *Trong suốt / Mờ / Đậm*. Chữ luôn giữ độ đậm 100%.

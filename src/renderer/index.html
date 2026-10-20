@@ -20,14 +20,13 @@
     <!-- thanh công cụ -->
     <div class="toolbar" id="toolbar">
       <span class="grp">
-        <button data-cmd="task" title="Tạo ô tích (checklist)">☑</button>
+        <button data-cmd="strikeThrough" title="Gạch ngang">S̶</button>
         <button data-cmd="insertUnorderedList" title="Danh sách chấm">•</button>
         <button data-cmd="insertOrderedList" title="Danh sách đánh số">1.</button>
       </span>
       <span class="grp">
         <button data-cmd="font-size-dec" title="Giảm cỡ chữ">A−</button>
         <button data-cmd="font-size-inc" title="Tăng cỡ chữ">A+</button>
-        <select id="fontSelect" title="Font chữ"></select>
         <label class="colorbtn" title="Màu chữ">
           <span>A</span>
           <input type="color" id="colorInput" value="#ffffff" />
@@ -54,6 +53,10 @@
     <!-- popover: xem thêm -->
     <div class="pop" id="morePop">
       <div class="pop-title">Tùy chọn</div>
+      <div class="field">
+        <span>Font chữ</span>
+        <select id="fontSelect"></select>
+      </div>
       <label class="row"><input type="checkbox" id="optAutoGrow" /> Tự mở rộng khi viết kín</label>
       <label class="row"><input type="checkbox" id="optFooter" /> Hiện đếm từ / việc</label>
       <label class="row"><input type="checkbox" id="optLaunch" /> Tự khởi động cùng máy</label>
