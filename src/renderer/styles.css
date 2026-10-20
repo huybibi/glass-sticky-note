@@ -26,7 +26,7 @@ html, body {
 .note {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
-  border-radius: 16px;
+  border-radius: 1px;
   border: 1.5px solid #ffffff;
   background: rgba(12, 14, 20, var(--alpha));
   -webkit-backdrop-filter: blur(16px) saturate(150%);
@@ -42,9 +42,11 @@ html, body {
   height: 34px; padding: 0 10px;
   flex: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 16px 16px 0 0;
+  border-radius: 1px 1px 0 0;
   cursor: grab;
   touch-action: none;
+  position: relative;
+  z-index: 45; /* nằm trên các tay cầm chỉnh kích thước để kéo thả được dễ dàng */
 }
 .grip.dragging { cursor: grabbing; }
 
@@ -81,10 +83,21 @@ html, body {
   display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px;
   padding: 6px 8px;
   flex: none;
+  min-height: 0;
   background: var(--tool-bg);
   border-bottom: 1px solid var(--tool-border);
   border-radius: 0;
+  overflow: hidden;
+  transition: opacity .18s ease, max-height .18s ease, padding .18s ease, border-color .18s ease;
   -webkit-user-select: none; user-select: none;
+}
+.toolbar.collapsed {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-color: transparent;
+  pointer-events: none;
 }
 
 .grp { display: inline-flex; align-items: center; gap: 2px; }

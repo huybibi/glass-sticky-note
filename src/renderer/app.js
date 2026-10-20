@@ -68,6 +68,7 @@
     fillNotesList();
 
     bindEvents();
+    syncToolbar();
     scheduleSave();
     requestAnimationFrame(() => autoGrow(true));
     updateCounters();
@@ -267,7 +268,19 @@
     const open = pop.classList.toggle('open');
     $$('.pop').forEach((p) => { if (p !== pop) p.classList.remove('open'); });
     $$('.pop-toggle').forEach((b) => b.classList.toggle('active', b.dataset.pop === name && open));
+    syncToolbar();
     return open;
+  }
+
+  // Thanh công cụ tự ẩn khi không soạn thảo; hiện lại khi đang gõ, rê chuột
+  // lên thanh công cụ, hoặc đang mở menu.
+  let toolbarHover = false;
+  function syncToolbar() {
+    const active = document.activeElement;
+    const focusInNote = (editor === active || editor.contains(active)) ||
+                        (titleInput === active || titleInput.contains(active));
+    const popOpen = !!document.querySelector('.pop.open');
+    $('#toolbar').classList.toggle('collapsed', !(focusInNote || popOpen || toolbarHover));
   }
 
   /* ========================= kéo chỉnh kích thước ========================= */
@@ -315,19 +328,24 @@
       if (e.target.closest('.title, button, select, input, label')) return;
       e.preventDefault();
       grip.classList.add('dragging');
+      try { grip.setPointerCapture(e.pointerId); } catch { /* noop */ }
+
       const sx = e.screenX, sy = e.screenY;
       const x0 = window.screenX, y0 = window.screenY;
 
+      // chỉ di chuyển, tuyệt đối không đụng đến kích thước
       const move = (ev) => {
         api.moveWindow(id, x0 + (ev.screenX - sx), y0 + (ev.screenY - sy));
       };
       const up = () => {
         grip.classList.remove('dragging');
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
       };
-      window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up, { once: true });
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up, { once: true });
+      grip.addEventListener('pointercancel', up, { once: true });
     });
   }
 
@@ -367,8 +385,18 @@
       if (!e.target.closest('.pop') && !e.target.closest('.pop-toggle')) {
         $$('.pop').forEach((p) => p.classList.remove('open'));
         $$('.pop-toggle').forEach((b) => b.classList.remove('active'));
+        syncToolbar();
       }
     });
+
+    // thanh công cụ tự ẩn/hiện
+    editor.addEventListener('focusin', syncToolbar);
+    editor.addEventListener('focusout', () => setTimeout(syncToolbar, 150));
+    titleInput.addEventListener('focusin', syncToolbar);
+    titleInput.addEventListener('focusout', () => setTimeout(syncToolbar, 150));
+    const tb = $('#toolbar');
+    tb.addEventListener('mouseenter', () => { toolbarHover = true; syncToolbar(); });
+    tb.addEventListener('mouseleave', () => { toolbarHover = false; syncToolbar(); });
 
     // settings
     $('#optAutoGrow').addEventListener('change', async (e) => {

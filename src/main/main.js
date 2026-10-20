@@ -88,6 +88,22 @@ const SELF_TEST_SOURCE = `
   ok('tiêu-đ-là-contenteditable', titleEl && titleEl.isContentEditable === true);
   ok('thanh-trên-không-còn-app-region-drag', getComputedStyle(document.getElementById('grip')).webkitAppRegion !== 'drag' && getComputedStyle(document.getElementById('grip')).getPropertyValue('-webkit-app-region') !== 'drag');
 
+  // 10. Góc vuông 1px + thanh trên nằm trên tay cầm (kéo thả không đụng kích thước)
+  const noteStyle = getComputedStyle(document.querySelector('.note'));
+  const br = parseFloat(noteStyle.borderRadius);
+  ok('góc-vuông-1px', br <= 1, noteStyle.borderRadius);
+  ok('thanh-kéo-trên-tay-cầm', parseInt(getComputedStyle(document.getElementById('grip')).zIndex, 10) >= 45);
+
+  // 11. Thanh công cụ tự ẩn khi không soạn, hiện lại khi soạn
+  const tb = document.getElementById('toolbar');
+  editor.blur();
+  await sleep(260);
+  const hid = tb.classList.contains('collapsed');
+  editor.focus();
+  await sleep(80);
+  const vis = !tb.classList.contains('collapsed');
+  ok('toolbar-tự-ẩn/hiện', hid && vis, hid + '/' + vis);
+
   return out;
 })()
 `;

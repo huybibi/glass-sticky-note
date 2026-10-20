@@ -25,6 +25,7 @@ Tờ **giấy nhớ trong suốt** dán thẳng lên desktop, viết nhanh, đ�
 | 11 | Nhiều giấy nhớ cùng lúc, mỗi tờ nhớ vị trí, kích thước, kiểu chữ riêng |
 | 12 | Đếm từ / ký tự |
 | 13 | Menu chuột phải ngay trong giấy: cỡ chữ, danh sách, copy/paste |
+| 16 | Thanh công cụ **tự ẩn** khi không soạn thảo, tự hiện lại khi gõ chữ hoặc rê chuột lên |
 | 14 | Xuất giấy nhớ ra file `.txt` |
 | 15 | Phím tắt toàn cục **Ctrl+Shift+N**: hiện/ẩn tất cả giấy nhớ |
 
