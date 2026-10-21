@@ -5,6 +5,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, dialog, globalShortcut } = require('electron');
 
 app.setName('Sticky Glass');
@@ -18,6 +19,14 @@ let quitting = false;
 let capturing = process.argv.includes('--capture');
 let selftest = process.argv.includes('--selftest');
 let suppressGeoSave = false; // tạm lờ lưu kích thước khi mở rộng cho dropdown
+
+// Test chạy trên profile riêng để không đọc/ghi notes.json thật của người dùng.
+if (selftest) {
+  const testProfile = path.join(os.tmpdir(), 'sticky-glass-selftest');
+  try { fs.rmSync(testProfile, { recursive: true, force: true }); } catch { /* noop */ }
+  fs.mkdirSync(testProfile, { recursive: true });
+  app.setPath('userData', testProfile);
+}
 
 /* ------------------------------- screenshots ------------------------------- */
 
@@ -77,15 +86,27 @@ const SELF_TEST_SOURCE = `
   // 3. Không còn bất kỳ cơ chế tự phình nào (ông tùy chọn + hàm đã bỏ)
   ok('không-còn-ô-tự-phình', !document.getElementById('optAutoGrow') && typeof window.__ui.autoGrow === 'undefined');
 
-  // 4. Nền đen (kênh RGB < 80)
+  // 4. Nền đen (kênh RGB < 80) nằm ở lớp ::before bên trong viền
   const noteEl = document.querySelector('.note');
-  const bg = getComputedStyle(noteEl).backgroundColor;
+  const noteStyle = getComputedStyle(noteEl);
+  const surfaceStyle = getComputedStyle(noteEl, '::before');
+  const bg = surfaceStyle.backgroundColor;
   const m = bg.match(/\\d+/g);
   ok('nền-đen', m && m.slice(0, 3).every((v) => +v < 80), bg);
 
   // 5. Viền trắng đậm 100%
   const bd = getComputedStyle(noteEl).borderTopColor;
   ok('viền-trắng-100%', bd === 'rgb(255, 255, 255)', bd);
+
+  // 5b. Nền tối chỉ vẽ trong lòng viền, không dùng shadow tràn ra ngoài
+  {
+    const innerR = parseFloat(surfaceStyle.borderTopLeftRadius);
+    const outerR = parseFloat(noteStyle.borderTopLeftRadius);
+    const noteBg = noteStyle.backgroundColor;
+    const noOuterShadow = noteStyle.boxShadow === 'none';
+    ok('nền-nằm-trong-viền', noteBg === 'rgba(0, 0, 0, 0)' && noOuterShadow && innerR < outerR,
+      noteBg + ' / ' + noteStyle.boxShadow + ' / ' + innerR + '<' + outerR);
+  }
 
   // 6. Gõ nhiều chữ (dài hơn giấy) không làm khung phình to — cả chiều rộng lẫn chiều cao
   const editor = ui.editor;
@@ -127,7 +148,6 @@ const SELF_TEST_SOURCE = `
   ok('tiêu-đ-là-contenteditable', titleEl && titleEl.isContentEditable === true);
 
   // 10. Góc bo 5px + thanh trên nằm trên tay cầm (kéo thả không đụng kích thước)
-  const noteStyle = getComputedStyle(document.querySelector('.note'));
   const br = parseFloat(noteStyle.borderRadius);
   ok('góc-bo-5px', br <= 5, noteStyle.borderRadius);
   ok('thanh-kéo-trên-tay-cầm', parseInt(getComputedStyle(document.getElementById('grip')).zIndex, 10) >= 45);
@@ -173,7 +193,33 @@ const SELF_TEST_SOURCE = `
     await sleep(120);
   }
 
-  // 15. Menu 3 chấm tràn ra ngoài giấy khi giấy ngắn — không dùng thanh cuộn
+  // 15. Tiêu đề canh trái; 2 icon tách khỏi chữ và luôn sát mép phải;
+  //     tiêu đề quá dài thì cắt bớt ở bên phải, không đè lên icon.
+  {
+    const title = document.getElementById('titleInput');
+    const pin = document.getElementById('btnPin');
+    const nr = noteEl.getBoundingClientRect();
+    const pr = pin.getBoundingClientRect();
+    const tr = title.getBoundingClientRect();
+    const iconsAtRight = nr.right - pr.right <= 6;
+    const titleAtLeft = tr.left - nr.left <= 13;
+    ok('tiêu-đề-trái-icon-phải', iconsAtRight && titleAtLeft,
+      'iconRight=' + (nr.right - pr.right).toFixed(1) + ' titleLeft=' + (tr.left - nr.left).toFixed(1));
+
+    const oldTitle = title.textContent;
+    title.textContent = 'Một tiêu đề rất dài để kiểm tra phần chữ bị cắt ở bên phải ' + 'nội dung '.repeat(20);
+    const sw = title.scrollWidth, cw = title.clientWidth;
+    const tr2 = title.getBoundingClientRect();
+    const pr2 = pin.getBoundingClientRect();
+    const clipped = sw > cw + 1;
+    const noOverlap = tr2.right <= pr2.left - 2;
+    const stillRight = nr.right - pr2.right <= 6;
+    title.textContent = oldTitle;
+    ok('tiêu-đề-dài-cắt-bên-phải', clipped && noOverlap && stillRight,
+      'scroll/client=' + sw + '/' + cw + ' titleRight=' + tr2.right.toFixed(1) + ' iconLeft=' + pr2.left.toFixed(1));
+  }
+
+  // 16. Menu 3 chấm tràn ra ngoài giấy khi giấy ngắn — không dùng thanh cuộn
   {
     const noteId = new URLSearchParams(location.search).get('id');
     const origW = window.innerWidth, origH = window.innerHeight;
@@ -227,6 +273,31 @@ async function runSelfTest() {
       for (let y = 0; y < Math.min(14, physH); y++) if (isWhite(midX, y)) topHas = true;
       for (let y = Math.max(0, physH - 14); y < physH; y++) if (isWhite(midX, y)) bottomHas = true;
       results.push({ name: 'viền-trắng-hiển-thị-cả-trên-dưới', ok: topHas && bottomHas, info: `top=${topHas} bottom=${bottomHas} phys=${physW}x${physH}` });
+
+      // vùng đệm ngoài viền trắng phải trong suốt hoàn toàn (không còn bóng đen thò ra)
+      const alphaAt = (x, y) => bmp[(y * physW + x) * 4 + 3];
+      const midY = Math.floor(physH / 2);
+      const outside = [
+        [0, midY], [physW - 1, midY], [midX, 0], [midX, physH - 1],
+        [0, 0], [physW - 1, 0], [0, physH - 1], [physW - 1, physH - 1],
+      ];
+      const notClear = outside.filter(([x, y]) => alphaAt(x, y) > 8);
+      results.push({
+        name: 'không-có-nền-tối-ngoài-viền',
+        ok: notClear.length === 0,
+        info: 'alpha=' + outside.slice(0, 4).map(([x, y]) => alphaAt(x, y)).join(',') + ' outside=' + JSON.stringify(notClear.slice(0, 3)),
+      });
+
+      // lớp nền tối bên trong viền vẫn phải hiển thị (không bị pseudo-element nuốt mất)
+      const inX = midX, inY = Math.floor(physH * 0.7);
+      const inI = (inY * physW + inX) * 4;
+      const innerAlpha = bmp[inI + 3];
+      const innerDark = bmp[inI] < 80 && bmp[inI + 1] < 80 && bmp[inI + 2] < 80;
+      results.push({
+        name: 'nền-tối-hiển-thị-bên-trong-viền',
+        ok: innerAlpha > 100 && innerDark,
+        info: 'alpha=' + innerAlpha + ' rgb=' + bmp[inI + 2] + ',' + bmp[inI + 1] + ',' + bmp[inI],
+      });
     } catch (e) {
       results.push({ name: 'viền-trắng-pixel', ok: false, info: String(e) });
     }

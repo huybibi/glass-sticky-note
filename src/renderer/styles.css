@@ -28,12 +28,23 @@ html, body {
   display: flex; flex-direction: column;
   border-radius: 5px;
   border: 1px solid #ffffff;
+  background: transparent;
+  isolation: isolate; /* giữ lớp nền tối bên dưới nội dung mà không đè lên nó */
+  color: var(--tc);
+}
+
+/* Nền tối vẽ trong lòng viền trắng (inset 0 = mép trong của border):
+   không bao giờ tràn ra ngoài viền, kể cả ở 4 góc bo tròn. */
+.note::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: 4px;
   background: rgba(12, 14, 20, var(--alpha));
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   backdrop-filter: blur(16px) saturate(150%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  z-index: -1;
+  pointer-events: none;
   transition: background 0.15s ease;
-  color: var(--tc);
 }
 
 /* ---------- vùng kéo di chuyển + tiêu đề ---------- */
@@ -42,7 +53,7 @@ html, body {
   height: 34px; padding: 0 3px 0 10px; /* sát mép phải cho nhóm nút 📄 📌 */
   flex: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 5px 5px 0 0;
+  border-radius: 4px 4px 0 0;
   cursor: grab;
   touch-action: none;
   position: relative;
@@ -52,9 +63,19 @@ html, body {
 .grip:active { cursor: grabbing; }
 .grip.dragging { cursor: grabbing; }
 
+/* nhóm 2 nút luôn dính mép phải, tách hẳn khỏi phần chữ */
+.grip-actions {
+  display: flex; align-items: center; gap: 2px;
+  margin-left: auto;
+  flex: none;
+  -webkit-app-region: no-drag;
+}
+
 .title {
   display: inline-block;
-  max-width: 55%;
+  flex: 0 1 auto; /* chữ ngắn: giữ đúng độ dài; chữ dài: co lại và cắt bên phải */
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   background: transparent; border: none; outline: none;
   color: inherit; font-size: 13px; font-weight: 600;
@@ -77,7 +98,6 @@ html, body {
 }
 .ghost:hover { background: rgba(255, 255, 255, 0.16); opacity: 1; }
 .ghost.active { background: rgba(255, 255, 255, 0.22); opacity: 1; }
-.grip .ghost:first-child { margin-left: auto; } /* đẩy nhóm nút 📄 📌 về phía phải ngoài cùng */
 
 /* ---------- thanh công cụ ---------- */
 .toolbar {
