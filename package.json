@@ -10,7 +10,7 @@
     "test": "electron . --selftest",
     "icons": "node scripts/make-icons.js",
     "dist:win": "electron-builder --win nsis --x64 --publish never",
-    "dist:mac": "electron-builder --mac dmg --publish never",
+    "dist:mac": "electron-builder --mac dmg --x64 --arm64 --publish never",
     "dist:linux": "electron-builder --linux AppImage"
   },
   "devDependencies": {
