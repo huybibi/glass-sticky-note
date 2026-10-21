@@ -1,5 +1,5 @@
 /**
- * make-icons.js — Sinh icon cho Sticky Glass (thuần Node, không thư viện ngoài).
+ * make-icons.js — Sinh icon giấy nhớ cho Sticky Glass (thuần Node, không thư viện ngoài).
  *  - build/icon.png  (1024x1024, dùng cho macOS / Linux)
  *  - build/icon.ico  (16..256, nhúng PNG, dùng cho Windows)
  * Chạy: npm run icons
@@ -36,7 +36,7 @@ function chunk(type, data) {
   return Buffer.concat([len, typeBuf, data, crcBuf]);
 }
 
-/** rgba: Uint8Array (w*h*4). Trả về Buffer PNG. */
+/** rgba: Buffer (w*h*4). Trả về Buffer PNG. */
 function encodePNG(w, h, rgba) {
   const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const ihdr = Buffer.alloc(13);
@@ -57,91 +57,178 @@ function encodePNG(w, h, rgba) {
 
 /* ------------------------- Vẽ icon (canvas RGBA) ------------------------- */
 
-function makeIconCanvas(size) {
-  const buf = Buffer.alloc(size * size * 4);
-  const S = size;
-  const r = S * 0.21; // bo góc
+function inRoundRect(px, py, x0, y0, x1, y1, r) {
+  if (px < x0 || px > x1 || py < y0 || py > y1) return false;
+  const cx = Math.max(x0 + r, Math.min(px, x1 - r));
+  const cy = Math.max(y0 + r, Math.min(py, y1 - r));
+  const dx = px - cx, dy = py - cy;
+  return dx * dx + dy * dy <= r * r;
+}
 
-  function insideRoundRect(x, y) {
-    // trong hình chữ nhật bo góc bán kính r
-    if (x < r && y < r) return (x - r) ** 2 + (y - r) ** 2 <= r * r;
-    if (x > S - 1 - r && y < r) return (x - (S - 1 - r)) ** 2 + (y - r) ** 2 <= r * r;
-    if (x < r && y > S - 1 - r) return (x - r) ** 2 + (y - (S - 1 - r)) ** 2 <= r * r;
-    if (x > S - 1 - r && y > S - 1 - r) return (x - (S - 1 - r)) ** 2 + (y - (S - 1 - r)) ** 2 <= r * r;
-    return x >= r && x <= S - 1 - r && y >= r && y <= S - 1 - r;
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+function mix(a, b, t) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+// Box blur 1 chiều tách ngang + dọc, dùng cho bóng đổ.
+function boxBlur(src, S, r) {
+  const tmp = new Float32Array(S * S);
+  const dst = new Float32Array(S * S);
+  const win = r * 2 + 1;
+  const at = (x, y) => src[y * S + x];
+  for (let y = 0; y < S; y++) {
+    let sum = 0;
+    for (let k = -r; k <= r; k++) sum += at(clamp(k, 0, S - 1), y);
+    for (let x = 0; x < S; x++) {
+      tmp[y * S + x] = sum / win;
+      sum -= at(clamp(x - r, 0, S - 1), y);
+      sum += at(clamp(x + r + 1, 0, S - 1), y);
+    }
   }
+  for (let x = 0; x < S; x++) {
+    let sum = 0;
+    for (let k = -r; k <= r; k++) sum += tmp[clamp(k, 0, S - 1) * S + x];
+    for (let y = 0; y < S; y++) {
+      dst[y * S + x] = sum / win;
+      sum -= tmp[clamp(y - r, 0, S - 1) * S + x];
+      sum += tmp[clamp(y + r + 1, 0, S - 1) * S + x];
+    }
+  }
+  return dst;
+}
 
-  // phông nền trong suốt
+// Downsample vùng (area average, alpha nhân trước) → cạnh mượt ở mọi kích thước.
+function downsample(master, S, size) {
+  const out = Buffer.alloc(size * size * 4);
+  const scale = S / size;
+  for (let oy = 0; oy < size; oy++) {
+    const sy0 = Math.floor(oy * scale);
+    const sy1 = Math.min(S, Math.max(sy0 + 1, Math.floor((oy + 1) * scale)));
+    for (let ox = 0; ox < size; ox++) {
+      const sx0 = Math.floor(ox * scale);
+      const sx1 = Math.min(S, Math.max(sx0 + 1, Math.floor((ox + 1) * scale)));
+      let sr = 0, sg = 0, sb = 0, sa = 0, n = 0;
+      for (let sy = sy0; sy < sy1; sy++) {
+        let i = (sy * S + sx0) * 4;
+        for (let sx = sx0; sx < sx1; sx++, i += 4) {
+          const a = master[i + 3] / 255;
+          sr += master[i] * a;
+          sg += master[i + 1] * a;
+          sb += master[i + 2] * a;
+          sa += a;
+          n++;
+        }
+      }
+      const o = (oy * size + ox) * 4;
+      if (sa > 0.0001) {
+        out[o] = Math.round(sr / sa);
+        out[o + 1] = Math.round(sg / sa);
+        out[o + 2] = Math.round(sb / sa);
+        out[o + 3] = Math.round((sa / n) * 255);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Vẽ icon giấy nhớ ở độ phân giải gốc (supersample rồi downscale):
+ * tờ giấy vàng, góc dưới-phải gấp lên, vài dòng chữ, viền mảnh, bóng mềm.
+ */
+function makeMaster(S) {
+  const buf = Buffer.alloc(S * S * 4);
+
+  // hình học tờ giấy
+  const x0 = S * 0.080, y0 = S * 0.075;
+  const x1 = S * 0.920, y1 = S * 0.915;
+  const r = S * 0.045;
+  const bw = Math.max(1, S * 0.0075);
+  const fold = S * 0.24;
+  const crease = Math.max(1, S * 0.008);
+
+  // màu
+  const topCol = [255, 234, 164];
+  const bottomCol = [255, 190, 45];
+  const edgeCol = [235, 170, 38];
+  const foldCol = [255, 246, 207];
+  const foldCol2 = [255, 228, 154];
+  const creaseCol = [206, 140, 20];
+  const lineCol = [146, 94, 20];
+
+  // bóng: silhouette lệch xuống, làm mờ 2 lượt
+  const mask = new Float32Array(S * S);
+  const dy = S * 0.028;
+  const spread = S * 0.004;
   for (let y = 0; y < S; y++) {
     for (let x = 0; x < S; x++) {
+      if (inRoundRect(x + 0.5, y + 0.5 - dy, x0 - spread, y0 - spread, x1 + spread, y1 + spread, r + spread)) {
+        mask[y * S + x] = 1;
+      }
+    }
+  }
+  const blurR = Math.max(2, Math.round(S * 0.016));
+  const shadow = boxBlur(boxBlur(mask, S, blurR), S, blurR);
+
+  const lineH = S * 0.046;
+  const lineR = lineH / 2;
+  const lines = [
+    { y: S * 0.315, xa: S * 0.215, xb: S * 0.715 },
+    { y: S * 0.455, xa: S * 0.215, xb: S * 0.655 },
+    { y: S * 0.595, xa: S * 0.215, xb: S * 0.560 },
+  ];
+
+  for (let y = 0; y < S; y++) {
+    const py = y + 0.5;
+    for (let x = 0; x < S; x++) {
+      const px = x + 0.5;
       const i = (y * S + x) * 4;
-      if (!insideRoundRect(x, y)) continue;
 
-      // gradient dọc: trắng sáng → xám nhẹ (kiểu kính sữa)
-      const t = y / S;
-      const shade = 1 - 0.22 * t;
-      const A = 252;
+      // nền bóng mềm (chỉ hiện ra ngoài tờ giấy)
+      const sa = shadow[y * S + x];
+      if (sa > 0.002) {
+        buf[i] = 70; buf[i + 1] = 40; buf[i + 2] = 8;
+        buf[i + 3] = Math.round(clamp(sa * 0.34, 0, 1) * 255);
+      }
 
-      // cờ gấp góc phải-trên
-      const fold = x > S * 0.78 && y < S * 0.22 && (x - S * 0.78) + (y - S * 0.22) > S * 0.22 * 0.5;
+      if (!inRoundRect(px, py, x0, y0, x1, y1, r)) continue;
 
-      if (fold) {
-        const ft = ((x - S * 0.78) + (y - S * 0.22)) / (S * 0.22 * 0.5);
-        buf[i] = Math.max(0, Math.round(235 - 70 * ft));
-        buf[i + 1] = Math.max(0, Math.round(236 - 70 * ft));
-        buf[i + 2] = Math.max(0, Math.round(242 - 70 * ft));
-        buf[i + 3] = 255;
+      // viền ngoài
+      const innerR = Math.max(0, r - bw);
+      if (!inRoundRect(px, py, x0 + bw, y0 + bw, x1 - bw, y1 - bw, innerR)) {
+        buf[i] = edgeCol[0]; buf[i + 1] = edgeCol[1]; buf[i + 2] = edgeCol[2]; buf[i + 3] = 255;
         continue;
       }
 
-      // nét viền mảnh
-      const edge = x < r + S * 0.012 || y < r + S * 0.012 || x > S - 1 - r - S * 0.012 || y > S - 1 - r - S * 0.012;
-      if (edge && x >= r && y >= r && x <= S - 1 - r && y <= S - 1 - r) {
-        buf[i] = 214; buf[i + 1] = 218; buf[i + 2] = 228; buf[i + 3] = 255;
-        continue;
+      // gradient vàng nhẹ theo chiều dọc + ngang
+      const tv = clamp((py - y0) / (y1 - y0), 0, 1);
+      const th = clamp((px - x0) / (x1 - x0), 0, 1);
+      const g = clamp(tv * 0.72 + th * 0.28, 0, 1);
+      let col = mix(topCol, bottomCol, g);
+
+      // góc gấp: tam giác phía góc dưới-phải
+      const u = (px - (x1 - fold)) + (py - (y1 - fold));
+      if (u > fold) {
+        const ft = clamp((u - fold) / fold, 0, 1);
+        col = mix(foldCol, foldCol2, ft);
+      }
+      // nếp gấp
+      if (u >= fold && u <= fold + crease) col = creaseCol;
+
+      // các dòng chữ
+      for (let li = 0; li < lines.length; li++) {
+        const ln = lines[li];
+        if (inRoundRect(px, py, ln.xa, ln.y, ln.xb, ln.y + lineH, lineR)) {
+          col = lineCol;
+          break;
+        }
       }
 
-      buf[i] = Math.round(252 * shade);
-      buf[i + 1] = Math.round(252 * shade);
-      buf[i + 2] = Math.round(254 * shade);
-      buf[i + 3] = Math.round(A * (0.9 + 0.1 * t));
-    }
-  }
-
-  // Các dòng chữ gợi ý
-  const lineY = [0.42, 0.55, 0.68, 0.81];
-  const lineH = Math.max(2, S * 0.028);
-  const lineX0 = S * 0.22;
-  const lineX1 = S * 0.78;
-  for (let li = 0; li < lineY.length; li++) {
-    if (li === 3) continue; // dòng cuối ngắn
-    const y0 = Math.round(S * lineY[li]);
-    const y1 = Math.min(S - 1, y0 + lineH);
-    const xEnd = li === 2 ? Math.round(S * 0.62) : Math.round(lineX1);
-    for (let y = y0; y <= y1; y++) {
-      for (let x = Math.round(lineX0); x <= xEnd; x++) {
-        const i = (y * S + x) * 4;
-        if (!insideRoundRect(x, y)) continue;
-        buf[i] = 150; buf[i + 1] = 156; buf[i + 2] = 175; buf[i + 3] = 255;
-      }
-    }
-  }
-
-  // hộp tích (checklist) góc trái-dưới
-  const bx = S * 0.22, by = S * 0.79, bs = S * 0.09;
-  for (let y = 0; y < S; y++) {
-    for (let x = 0; x < S; x++) {
-      const i = (y * S + x) * 4;
-      if (!insideRoundRect(x, y)) continue;
-      if (x >= bx && x <= bx + bs && y >= by && y <= by + bs) {
-        buf[i] = 150; buf[i + 1] = 156; buf[i + 2] = 175; buf[i + 3] = 255;
-      }
-      // dấu tích
-      const t1 = ((x - bx) / bs) * 2 - 1;
-      const t2 = ((y - by) / bs) * 2 - 1;
-      if (t2 > 0.05 && Math.abs(t2) < 0.16 && t1 > -0.7 && t1 < 0.7 && Math.abs(t1) < Math.abs(t2) * 1.25) {
-        buf[i] = 255; buf[i + 1] = 255; buf[i + 2] = 255; buf[i + 3] = 255;
-      }
+      buf[i] = col[0]; buf[i + 1] = col[1]; buf[i + 2] = col[2]; buf[i + 3] = 255;
     }
   }
 
@@ -180,11 +267,14 @@ function makeICO(pngs) {
 const outDir = path.join(__dirname, '..', 'build');
 fs.mkdirSync(outDir, { recursive: true });
 
-const big = makeIconCanvas(1024);
+const MASTER = 2048;
+const master = makeMaster(MASTER);
+
+const big = downsample(master, MASTER, 1024);
 fs.writeFileSync(path.join(outDir, 'icon.png'), encodePNG(1024, 1024, big));
 console.log('✓ build/icon.png (1024x1024)');
 
 const sizes = [16, 24, 32, 48, 64, 128, 256];
-const pngs = sizes.map((s) => ({ size: s, data: encodePNG(s, s, makeIconCanvas(s)) }));
+const pngs = sizes.map((s) => ({ size: s, data: encodePNG(s, s, downsample(master, MASTER, s)) }));
 fs.writeFileSync(path.join(outDir, 'icon.ico'), makeICO(pngs));
 console.log('✓ build/icon.ico (' + sizes.join(',') + ')');
