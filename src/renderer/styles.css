@@ -76,7 +76,8 @@ html, body {
   flex: 0 1 auto; /* chữ ngắn: giữ đúng độ dài; chữ dài: co lại và cắt bên phải */
   min-width: 0;
   max-width: 100%;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  overflow: clip; /* luôn giữ phần đầu tiêu đề, phần cuối bị cắt (không tự cuộn theo caret) */
+  text-overflow: ellipsis; white-space: nowrap;
   background: transparent; border: none; outline: none;
   color: inherit; font-size: 13px; font-weight: 600;
   letter-spacing: 0.02em;

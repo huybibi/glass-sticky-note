@@ -214,9 +214,30 @@ const SELF_TEST_SOURCE = `
     const clipped = sw > cw + 1;
     const noOverlap = tr2.right <= pr2.left - 2;
     const stillRight = nr.right - pr2.right <= 6;
+
+    // Đang sửa và đặt caret ở cuối: phần đầu vẫn phải hiển thị, phần cuối bị cắt.
+    title.focus();
+    const caret = document.createRange();
+    caret.selectNodeContents(title);
+    caret.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(caret);
+    title.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    await sleep(80);
+    const firstChar = document.createRange();
+    firstChar.setStart(title.firstChild, 0);
+    firstChar.setEnd(title.firstChild, 1);
+    const fcr = firstChar.getBoundingClientRect();
+    const startVisible = title.scrollLeft <= 1 && fcr.left >= tr2.left - 1 && fcr.left < tr2.right;
+    const scrollLeft = title.scrollLeft;
+    title.blur();
     title.textContent = oldTitle;
+
     ok('tiêu-đề-dài-cắt-bên-phải', clipped && noOverlap && stillRight,
       'scroll/client=' + sw + '/' + cw + ' titleRight=' + tr2.right.toFixed(1) + ' iconLeft=' + pr2.left.toFixed(1));
+    ok('tiêu-đề-luôn-hiện-phần-đầu', startVisible,
+      'scrollLeft=' + scrollLeft + ' firstCharLeft=' + fcr.left.toFixed(1) + ' titleLeft=' + tr2.left.toFixed(1));
   }
 
   // 16. Menu 3 chấm tràn ra ngoài giấy khi giấy ngắn — không dùng thanh cuộn
@@ -229,7 +250,7 @@ const SELF_TEST_SOURCE = `
     const noteBottom = document.querySelector('.note').getBoundingClientRect().bottom;
     const moreBtn = document.querySelector('.pop-toggle[data-pop="morePop"]');
     moreBtn.click();
-    await sleep(350);
+    await sleep(700);
     const mp = document.getElementById('morePop');
     const mr = mp.getBoundingClientRect();
     const noScroll = mp.scrollHeight <= mp.clientHeight + 1;

@@ -217,6 +217,13 @@
     });
   }
 
+  /* ========================= tiêu đề ========================= */
+
+  // Giữ tiêu đề luôn hiển thị từ đầu; phần dư bị cắt ở bên phải.
+  function keepTitleStart() {
+    if (titleInput.scrollLeft !== 0) titleInput.scrollLeft = 0;
+  }
+
   /* ========================= danh sách giấy nhớ ========================= */
 
   async function fillNotesList() {
@@ -448,13 +455,19 @@
     editor.addEventListener('beforeinput', handleSpaceBeforeInput);
     editor.addEventListener('blur', scheduleSave);
 
-    titleInput.addEventListener('input', onChange);
+    titleInput.addEventListener('input', () => { keepTitleStart(); onChange(); });
     titleInput.addEventListener('focus', () => {
       const r = document.createRange();
       r.selectNodeContents(titleInput);
       const s = window.getSelection();
       s.removeAllRanges();
       s.addRange(r);
+      requestAnimationFrame(keepTitleStart);
+    });
+    titleInput.addEventListener('click', keepTitleStart);
+    titleInput.addEventListener('keyup', keepTitleStart);
+    document.addEventListener('selectionchange', () => {
+      if (document.activeElement === titleInput) keepTitleStart();
     });
 
     bindResize();
