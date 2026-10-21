@@ -278,3 +278,10 @@ const sizes = [16, 24, 32, 48, 64, 128, 256];
 const pngs = sizes.map((s) => ({ size: s, data: encodePNG(s, s, downsample(master, MASTER, s)) }));
 fs.writeFileSync(path.join(outDir, 'icon.ico'), makeICO(pngs));
 console.log('✓ build/icon.ico (' + sizes.join(',') + ')');
+
+// Icon tray dùng cùng thiết kế, đóng gói kèm app (src/**/*).
+const assetsDir = path.join(__dirname, '..', 'src', 'assets');
+fs.mkdirSync(assetsDir, { recursive: true });
+fs.writeFileSync(path.join(assetsDir, 'tray.png'), encodePNG(32, 32, downsample(master, MASTER, 32)));
+fs.writeFileSync(path.join(assetsDir, 'tray-2x.png'), encodePNG(64, 64, downsample(master, MASTER, 64)));
+console.log('✓ src/assets/tray.png (32), tray-2x.png (64)');

@@ -323,6 +323,28 @@ async function runSelfTest() {
       results.push({ name: 'viền-trắng-pixel', ok: false, info: String(e) });
     }
 
+    // icon tray phải là ảnh giấy nhớ vàng mới, không phải icon xám cũ
+    try {
+      const trayImg = loadTrayImage();
+      const size = trayImg.getSize();
+      const bmp = trayImg.toBitmap();
+      let colored = false;
+      for (let i = 0; i + 3 < bmp.length; i += 4) {
+        if (bmp[i + 3] > 200 &&
+            (Math.abs(bmp[i] - bmp[i + 1]) > 30 || Math.abs(bmp[i + 1] - bmp[i + 2]) > 30)) {
+          colored = true;
+          break;
+        }
+      }
+      results.push({
+        name: 'icon-tray-giấy-nhớ',
+        ok: !trayImg.isEmpty() && size.width === 32 && colored,
+        info: 'size=' + size.width + 'x' + size.height + ' colored=' + colored,
+      });
+    } catch (e) {
+      results.push({ name: 'icon-tray-giấy-nhớ', ok: false, info: String(e) });
+    }
+
     const failed = results.filter((r) => !r.ok);
     console.log('SELFTEST RESULT:');
     for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.info ? '  (' + r.info + ')' : ''}`);
@@ -338,38 +360,12 @@ async function runSelfTest() {
 
 /* ------------------------------- tray icon ------------------------------- */
 
-function drawTrayImage() {
-  const S = 32;
-  const buf = Buffer.alloc(S * S * 4);
-  const r = 7;
-  const inside = (x, y) => {
-    if (x < r && y < r) return (x - r) ** 2 + (y - r) ** 2 <= r * r;
-    if (x > S - 1 - r && y < r) return (x - (S - 1 - r)) ** 2 + (y - r) ** 2 <= r * r;
-    if (x < r && y > S - 1 - r) return (x - r) ** 2 + (y - (S - 1 - r)) ** 2 <= r * r;
-    if (x > S - 1 - r && y > S - 1 - r) return (x - (S - 1 - r)) ** 2 + (y - (S - 1 - r)) ** 2 <= r * r;
-    return x >= r && x <= S - 1 - r && y >= r && y <= S - 1 - r;
-  };
-  for (let y = 0; y < S; y++) {
-    for (let x = 0; x < S; x++) {
-      const i = (y * S + x) * 4;
-      if (!inside(x, y)) continue;
-      const edge = x < r + 1 || y < r + 1 || x > S - 2 - r || y > S - 2 - r;
-      const v = edge ? 235 : 250;
-      buf[i] = v; buf[i + 1] = v; buf[i + 2] = v; buf[i + 3] = 255;
-    }
-  }
-  // dòng chữ
-  for (let y = 8; y <= 24; y++) {
-    for (let x = 8; x <= 22; x++) {
-      const skip = (y >= 13 && y <= 16) || (y >= 20 && y <= 23);
-      if (skip) continue;
-      const i = (y * S + x) * 4;
-      if (inside(x, y)) {
-        buf[i] = 140; buf[i + 1] = 148; buf[i + 2] = 170; buf[i + 3] = 255;
-      }
-    }
-  }
-  return nativeImage.createFromBitmap(buf, { width: S, height: S });
+function loadTrayImage() {
+  const dir = path.join(__dirname, '..', 'assets');
+  const img = nativeImage.createFromPath(path.join(dir, 'tray.png'));
+  const hi = nativeImage.createFromPath(path.join(dir, 'tray-2x.png'));
+  if (!hi.isEmpty()) img.addRepresentation({ scaleFactor: 2, buffer: hi.toPNG() });
+  return img;
 }
 
 function rebuildTrayMenu() {
@@ -666,7 +662,7 @@ if (!gotLock) {
     store.load();
     registerIpc();
 
-    tray = new Tray(drawTrayImage());
+    tray = new Tray(loadTrayImage());
     tray.setToolTip('Sticky Glass');
     tray.on('double-click', toggleAllComments);
     rebuildTrayMenu();

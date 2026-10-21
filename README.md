@@ -89,8 +89,9 @@ glass-sticky-note/
 │  │  ├─ store.js     # lưu giấy nhớ (userData/notes.json)
 │  │  └─ fonts.js     # cài font tùy chỉnh
 │  ├─ preload.js      # cầu nối an toàn
+│  ├─ assets/         # icon tray (tray.png / tray-2x.png)
 │  └─ renderer/       # giao diện (HTML/CSS/JS thuần)
-├─ scripts/make-icons.js  # sinh icon không cần công cụ ngoài
+├─ scripts/make-icons.js  # sinh icon app + tray không cần công cụ ngoài
 ├─ build/             # icon.ico / icon.png
 ├─ captures/          # ảnh demo cho README
 └─ .github/workflows/build.yml
