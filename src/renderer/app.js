@@ -403,12 +403,16 @@
     });
 
     // thanh công cụ tự ẩn/hiện theo tương tác
+    noteEl.addEventListener('pointerdown', (e) => {
+      if (!e.target.closest('.rz')) markInteract();
+    });
     editor.addEventListener('pointerdown', markInteract);
     editor.addEventListener('keydown', markInteract);
     editor.addEventListener('input', markInteract);
     titleInput.addEventListener('pointerdown', markInteract);
     titleInput.addEventListener('input', markInteract);
     const tb = $('#toolbar');
+    tb.addEventListener('pointerdown', markInteract);
     tb.addEventListener('mouseenter', () => { toolbarHover = true; syncToolbar(); });
     tb.addEventListener('mouseleave', () => { toolbarHover = false; syncToolbar(); });
 

@@ -152,17 +152,21 @@ const SELF_TEST_SOURCE = `
   ok('góc-bo-5px', br <= 5, noteStyle.borderRadius);
   ok('thanh-kéo-trên-tay-cầm', parseInt(getComputedStyle(document.getElementById('grip')).zIndex, 10) >= 45);
 
-  // 11. Thanh công cụ: ẩn lúc đầu; hiện khi tương tác; tự ẩn lại sau khi dừng
+  // 11. Thanh công cụ: ẩn lúc đầu; hiện khi tương tác; tự ẩn lại sau khi dừng; luôn chiếm diện tích cố định
   const tb = document.getElementById('toolbar');
   await sleep(1700); // đợi trạng thái ẩn (nếu test trước để lại tương tác)
   const startHidden = tb.classList.contains('collapsed');
+  const edTopHidden = editor.getBoundingClientRect().top;
   editor.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
   await sleep(80);
   const showAfterEdit = !tb.classList.contains('collapsed');
+  const edTopVisible = editor.getBoundingClientRect().top;
   await sleep(1800);
   const hideAfterIdle = tb.classList.contains('collapsed');
+  const noJump = Math.abs(edTopHidden - edTopVisible) < 1;
   ok('toolbar-tự-ẩn/hiện', startHidden && showAfterEdit && hideAfterIdle, startHidden + '/' + showAfterEdit + '/' + hideAfterIdle);
+  ok('toolbar-luôn-chiếm-diện-tích-cố-định', noJump, edTopHidden + ' vs ' + edTopVisible);
 
   // 12. Tờ giấy nằm lùi vào trong cửa sổ (viền không bị mép cắt)
   const r = document.querySelector('.note').getBoundingClientRect();
